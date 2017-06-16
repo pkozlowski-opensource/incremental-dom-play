@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="idom_variant.js"></script>
+    <script src="renderer.js"></script>
+    <script>
+        function fareFamilyHeader(cursor, fareFamilies) {
+            cursor = elementStart(cursor, 0, 'div', {className: 'fare-family-names'});
+            for (let fareFamily of fareFamilies) {
+                cursor = elementStart(cursor, 0, 'h4');
+                cursor = text(cursor, 0, fareFamily.name);
+                cursor = elementEnd(cursor);
+            }
+            cursor = elementEnd(cursor);
+
+            cursor = elementStart(cursor, 1, 'div', {className: 'fare-family-description'});
+            for (let fareFamily of fareFamilies) {
+                cursor = elementStart(cursor, 0, 'div');
+                cursor = text(cursor, 0, fareFamily.shortDescription);
+                cursor = elementEnd(cursor);
+            }
+            cursor = elementEnd(cursor);
+
+            return cursor;
+        }
+    </script>
+</head>
+<body>
+    <div id="app"></div>
+</body>
+<script>
+    var domRenderer = new DOMRenderer(document, document.querySelector('#app'));
+    var cursor = patch(new VDomCursor(domRenderer), fareFamilyHeader, [
+        {name: 'foo', shortDescription: 'foooooo'},
+        {name: 'bar', shortDescription: 'foooooo'},
+        {name: 'baz', shortDescription: 'foooooo'}
+    ]);
+</script>
+</html>
