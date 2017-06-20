@@ -63,5 +63,9 @@ DOMRenderer.prototype.removeNode = function removeNode(node) {
 };
 
 DOMRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
-    node[propName] = propValue;
+    if (propName.indexOf('style.') === 0) {
+        node.style[propName.slice(6)] = propValue;
+    } else {
+        node[propName] = propValue;
+    }
 };

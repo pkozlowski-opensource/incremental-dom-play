@@ -5,6 +5,15 @@ function VDomCursor(renderer, vdom, currentIdx, parentCursor) {
     this.parentCursor = parentCursor;
 }
 
+function VDomNode(id, nativeEl, type, value, props) {
+    this.id = id;
+    this.nativeEl = nativeEl;
+    this.type = type;
+    this.value = value;
+    this.props = props;
+    this.children = null;
+}
+
 function advanceTo(vdom, startIdx, id) {
     if (startIdx < vdom.length) { //short-circuit => probably could skip this thing altogether in the creation mode
         for (var i = startIdx; i < vdom.length; i++) {
@@ -35,7 +44,7 @@ function setNativeProps(renderer, nativeEl, props) {
     }
 }
 
-function createNativeEl(renderer, type, value, staticProps, props) {
+function createNativeEl(renderer, type, value, staticProps, props, eventHandlers) {
     var nativeEl;
 
     if (type === '#text') {
@@ -49,6 +58,12 @@ function createNativeEl(renderer, type, value, staticProps, props) {
         }
         if (props) {
             setNativeProps(renderer, nativeEl, props);
+        }
+        if (eventHandlers) {
+            var events = Object.keys(eventHandlers);
+            for (var i=0; i<events.length; i++) {
+                nativeEl.addEventListener(events[i], eventHandlers[events[i]]);
+            }
         }
     }
 
@@ -69,47 +84,42 @@ function appendNativeEl(renderer, cursor, nativeEl) {
     }
 }
 
-function createOrUpdateNode(cursor, elId, type, value, staticProps, props) {
+function createNode(cursor, elId, type, value, staticProps, props, eventHandlers) {
+    var nativeEl = createNativeEl(cursor.renderer, type, value, staticProps, props, eventHandlers);
+    appendNativeEl(cursor.renderer, cursor, nativeEl);
+
+    cursor.vdom.splice(cursor.currentIdx, 0, new VDomNode(elId, nativeEl, type, value, props));
+}
+
+function updateNode(renderer, node, value, props) {
+    // update value
+    if (node.value !== value) {
+        node.value = value;
+        renderer.updateText(node.nativeEl, value);
+    }
+
+    // update props
+    if (props) {
+        // TODO: refactor to avoid forEach usage
+        Object.keys(props).forEach(function(propKey) {
+            if (node.props[propKey] !== props[propKey]) {
+                node.props[propKey] = props[propKey];
+                renderer.setProperty(node.nativeEl, propKey, props[propKey])
+            }
+        });
+    }
+}
+
+function createOrUpdateNode(cursor, elId, type, value, staticProps, props, eventHandlers) {
     var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
     var node;
-    var nativeEl;
 
     if (elementIdx === -1) {
         //not found at the expected position => create
-        nativeEl = createNativeEl(cursor.renderer, type, value, staticProps, props);
-        appendNativeEl(cursor.renderer, cursor, nativeEl);
-
-        cursor.vdom.splice(cursor.currentIdx, 0, {
-            id: elId,
-            nativeEl: nativeEl,
-            type: type,
-            value: value,
-            staticProps: staticProps,
-            props: props,
-            children: null
-        }); //this will potentially cause GC as arrays need to grow
-
-
+        createNode(cursor, elId, type, value, staticProps, props, eventHandlers);
     } else {
         // found: update
-        node = cursor.vdom[elementIdx];
-
-        // update value
-        if (node.value !== value) {
-            node.value = value;
-            cursor.renderer.updateText(node.nativeEl, value);
-        }
-
-        // update props
-        if (props) {
-            // TODO: refactor to avoid forEach usage
-            Object.keys(props).forEach(function(propKey) {
-                if (node.props[propKey] !== props[propKey]) {
-                    node.props[propKey] = props[propKey];
-                    cursor.renderer.setProperty(node.nativeEl, propKey, props[propKey])
-                }
-            });
-        }
+        updateNode(cursor.renderer, cursor.vdom[elementIdx], value, props);
     }
 
     if (elementIdx > cursor.currentIdx) {
@@ -127,18 +137,18 @@ function text(cursor, elId, value) {
 }
 
 
-function element(cursor, elId, tagName, staticProps, props) {
-    return createOrUpdateNode(cursor, elId, tagName, null, staticProps, props);
+function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
+    return createOrUpdateNode(cursor, elId, tagName, null, staticProps, props, eventHandlers);
 }
 
-function view(cursor, elId, viewFn) {
+function view(cursor, elId, viewFn, data) {
     cursor = createOrUpdateNode(cursor, elId, '#view', null, null, null);
     cursor = childrenStart(cursor);
-    return childrenEnd(viewFn(cursor, null)); // TODO: data and context for the view
+    return childrenEnd(viewFn(cursor, data)); // TODO: data and context for the view
 }
 
-function elementStart(cursor, elId, tagName, staticProps, props) {
-    cursor = element(cursor, elId, tagName, staticProps, props);
+function elementStart(cursor, elId, tagName, staticProps, props, eventHandlers) {
+    cursor = element(cursor, elId, tagName, staticProps, props, eventHandlers);
     return childrenStart(cursor);
 }
 
@@ -183,6 +193,7 @@ function patch(cursor, cmptFn, data) {
 }
 
 //TODO:
+// - passing data around to view + tests
 // - event handlers
 // - need better asserts on VDOM so writing tests is easier
 // - loops with a group of sibiling elements => loops need a view... => ng-content?

@@ -233,17 +233,6 @@
 
         describe('elements with properties', function() {
 
-            it('should support creation of elements with static properties', function() {
-                function staticPropsApp(cursor) {
-                    return element(cursor, 0, 'div', {id: 'some_id'});
-                }
-
-                var cursor = patch(new VDomCursor(noopRenderer), staticPropsApp, null);
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('div');
-                expect(cursor.vdom[0].staticProps.id).toBe('some_id');
-            });
-
             it('should support creation of elements with dynamic properties', function() {
                 function dynamicPropsApp(cursor, data) {
                     return element(cursor, 0, 'div', null, data);
@@ -262,13 +251,12 @@
 
             it('should support creation of elements with static and dynamic properties containing dots', function() {
                 function staticAndDynamicPropsApp(cursor) {
-                    return element(cursor, 0, 'div', {'attr.id': 'some_id'}, {'class.foo': true});
+                    return element(cursor, 0, 'div', null, {'class.foo': true});
                 }
 
                 var cursor = patch(new VDomCursor(noopRenderer), staticAndDynamicPropsApp, null);
                 expect(cursor.vdom.length).toBe(1);
                 expect(cursor.vdom[0].type).toBe('div');
-                expect(cursor.vdom[0].staticProps['attr.id']).toBe('some_id');
                 expect(cursor.vdom[0].props['class.foo']).toBe(true);
             });
         });
