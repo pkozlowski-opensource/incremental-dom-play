@@ -2,39 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/styles.css">
     <script src="idom_variant.js"></script>
     <script src="renderer.js"></script>
-    <script>
-        function fareFamilyHeader(cursor, fareFamilies) {
-            cursor = elementStart(cursor, 0, 'div', {className: 'fare-family-names'});
-            for (let fareFamily of fareFamilies) {
-                cursor = elementStart(cursor, 0, 'h4');
-                cursor = text(cursor, 0, fareFamily.name);
-                cursor = elementEnd(cursor);
-            }
-            cursor = elementEnd(cursor);
-
-            cursor = elementStart(cursor, 1, 'div', {className: 'fare-family-description'});
-            for (let fareFamily of fareFamilies) {
-                cursor = elementStart(cursor, 0, 'div');
-                cursor = text(cursor, 0, fareFamily.shortDescription);
-                cursor = elementEnd(cursor);
-            }
-            cursor = elementEnd(cursor);
-
-            return cursor;
-        }
-    </script>
+    <script src="flex.js"></script>
+    <script src="assets/response.js"></script>
 </head>
 <body>
+    <button id="show">Show</button>
+    <button id="hide">Hide</button>
     <div id="app"></div>
 </body>
 <script>
+    var selectedItinerary;
+    var selectedFare;
+
     var domRenderer = new DOMRenderer(document, document.querySelector('#app'));
-    var cursor = patch(new VDomCursor(domRenderer), fareFamilyHeader, [
-        {name: 'foo', shortDescription: 'foooooo'},
-        {name: 'bar', shortDescription: 'foooooo'},
-        {name: 'baz', shortDescription: 'foooooo'}
-    ]);
+    var cursor = new VDomCursor(domRenderer);
+
+    var showButton = document.querySelector('#show');
+    var hideButton = document.querySelector('#hide');
+
+    showButton.addEventListener('click', function() {
+        cursor = patch(cursor, app, flexResponse);
+    });
+
+    hideButton.addEventListener('click', function() {
+        cursor = patch(cursor, app, {
+            availability: {
+                bounds: []
+            }
+        });
+    });
+
+    function refresh() {
+        cursor = patch(cursor, app, flexResponse)
+    }
 </script>
 </html>
