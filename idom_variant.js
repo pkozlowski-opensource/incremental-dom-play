@@ -15,11 +15,10 @@ function VDomNode(id, nativeEl, type, value, props) {
 }
 
 function advanceTo(vdom, startIdx, id) {
-    if (startIdx < vdom.length) { //short-circuit => probably could skip this thing altogether in the creation mode
-        for (var i = startIdx; i < vdom.length; i++) {
-            if (vdom[i].id === id) {
-                return i;
-            }
+    var len = vdom.length;
+    for (var i = startIdx; i < len; i++) {
+        if (vdom[i].id === id) {
+            return i;
         }
     }
     return -1;
@@ -71,7 +70,6 @@ function createNativeEl(renderer, type, value, staticProps, props, eventHandlers
 }
 
 function appendNativeEl(renderer, cursor, nativeEl) {
-    // TODO: this will attatch things immediatelly to the DOM :-(
     if (cursor.parentCursor) {
         var parentEl = cursor.parentCursor.vdom[cursor.parentCursor.currentIdx -1];
         if (parentEl.type === '#view') {
@@ -192,19 +190,37 @@ function patch(cursor, cmptFn, data) {
     return cursor;
 }
 
-//TODO:
-// - passing data around to view + tests
-// - event handlers
+//TODO(IMPL):
+// - tests for renderer interactions
+// - attrs - should be as simple as prefixing props with attr. => BTW, why Angular is making it so complex? Speed?
 // - need better asserts on VDOM so writing tests is easier
 // - loops with a group of sibiling elements => loops need a view... => ng-content?
 // - loops with stable sorting (keyed sorting)
 // - map props (class, style, ...)
-// - attrs - should be as simple as prefixing props with attr. => BTW, why Angular is making it so complex? Speed?
-// - components (inputs, outputs, should the element stay in the DOM)
+// - change props to attrs => seems like it is slower, deffer for now
 
-//IDEAS:
-// - move "deleteNodes" to the cursor
-// - I could have an array of function calls outside of JS blocks, I think
-// - I could probably be skipping many comparison when I know that there are no bindings
+//TODO(FUNCTIONALITY):
+// - data as multiple arguments
+// - refresh cycles / uni-directional data flow
+// - HTML compiler
+// - components (inputs, outputs, should the element stay in the DOM)
+// - projection for components
+// - namespaced elements (SVG, Math etc.)
+// - web components compatibility
+// - server-side rendering (hydration)
+
+//TODO(IDEAS):
+
+
+//TODO(PERF):
+// - check if removing children with a known parent is faster
+// - track memory usage - list places where memory gets allocated
+// - skip parts of the tree optimizations
 // - I KNOW many things in the creation mode...
+// - I could probably be skipping many comparison when I know that there are no bindings
 // - "static" blocks where I could totally skip comparisons (or even prun / not create the VDOM!)
+// - innerHtml for "static" parts (this would probably "kill" ReactNative-like renderers)
+
+//TODO(FAILED PERF EXPERIMENTS):
+// - explore impact of monomorphic calls (elementStart mostly) => doesn't seem to have any impact...
+// - is rendering to doc fragment any faster? => minimal difference (if any), ~1ms
