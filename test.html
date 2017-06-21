@@ -15,298 +15,567 @@
     <script>
         var noopRenderer = new NoopRenderer();
 
-        describe('single text node', function () {
-            function app(cursor, data) {
-                if (data !== null) {
-                    cursor = text(cursor, 0, data);
-                }
+        function NoopRenderer() {}
 
-                return cursor;
+        NoopRenderer.prototype.createComment = function createComment(value) {
+        };
+
+        NoopRenderer.prototype.createElement = function createElement(value) {
+        };
+
+        NoopRenderer.prototype.createText = function createText(value) {
+        };
+
+        NoopRenderer.prototype.updateText = function updateText(value) {
+        };
+
+        NoopRenderer.prototype.appendChild = function appendChild(parentNode, childNode) {
+        };
+
+        NoopRenderer.prototype.appendChildToRoot = function appendChildToRoot(childNode) {
+        };
+
+        NoopRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
+        };
+
+        NoopRenderer.prototype.removeNode = function removeNode(node) {
+        };
+
+        NoopRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
+        };
+
+        function MockNode(id, type, value) {
+            this.id = id;
+            this.type = type;
+            this.value = value;
+        }
+
+        MockNode.prototype.toString = function() {
+          return `${this.type} ${this.id}`;
+        };
+
+        MockNode.prototype.toFullString = function() {
+            if (this.type === '#text') {
+                return `${this.type} ${this.id} ${this.value}`;
+            } else {
+                return `${this.type} ${this.id}`;
             }
+        };
 
-            it('should create a single text node', function () {
-                var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
+        function LoggingRenderer() {
+          this.uid = 0;
+          this.instructions = [];
+          this.root = new MockNode(this.uid++, '#root');
+        }
 
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('#text');
-                expect(cursor.vdom[0].value).toBe('foo');
-            });
+        LoggingRenderer.prototype.clearInstructions = function clear() {
+            this.instructions = [];
+        };
 
-            it('should update a single text node', function () {
-                var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
-                cursor = patch(cursor, app, 'bar');
+        LoggingRenderer.prototype.createComment = function createComment(value) {
+        };
 
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('#text');
-                expect(cursor.vdom[0].value).toBe('bar');
-            });
+        LoggingRenderer.prototype.createElement = function createElement(tagName) {
+            var node = new MockNode(this.uid++, tagName);
+            this.instructions.push(`CREATE ${node.toFullString()}`);
 
-            it('should delete a single text node', function () {
-                var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
-                cursor = patch(cursor, app, null);
+            return node;
+        };
 
-                expect(cursor.vdom.length).toBe(0);
-            });
-        });
+        LoggingRenderer.prototype.createText = function createText(value) {
+            var node = new MockNode(this.uid++, '#text', value);
+            this.instructions.push(`CREATE ${node.toFullString()}`);
 
-        describe('multiple text nodes', function () {
+            return node;
+        };
 
-            function app(cursor, data) {
-                if (data !== null) {
-                    if (data !== 'deleteFirst') {
-                        cursor = text(cursor, 0, 'foo');
+        LoggingRenderer.prototype.updateText = function updateText(node, value) {
+            node.value = value;
+            this.instructions.push(`UPDATE ${node.toFullString()}`);
+        };
+
+        LoggingRenderer.prototype.appendChild = function appendChild(parentNode, childNode) {
+            this.instructions.push(`APPEND ${parentNode} -> ${childNode}`);
+        };
+
+        LoggingRenderer.prototype.appendChildToRoot = function appendChildToRoot(childNode) {
+            this.appendChild(this.root, childNode);
+        };
+
+        LoggingRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
+        };
+
+        LoggingRenderer.prototype.removeNode = function removeNode(node) {
+            this.instructions.push(`DELETE ${node}`);
+        };
+
+        LoggingRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
+            node[propName] = propValue;
+            this.instructions.push(`SET ${node} ${propName}=${propValue}`);
+        };
+
+
+        describe('VDOM interactions', function() {
+
+            describe('single text node', function () {
+                function app(cursor, data) {
+                    if (data !== null) {
+                        cursor = text(cursor, 0, data);
                     }
-                    if (data !== 'deleteLast') {
-                        cursor = text(cursor, 1, data);
-                    }
+
+                    return cursor;
                 }
 
-                return cursor;
-            }
+                it('should create a single text node', function () {
+                    var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
 
-            it('should create several text nodes', function () {
-                var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
-                expect(cursor.vdom.length).toBe(2);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('#text');
+                    expect(cursor.vdom[0].value).toBe('foo');
+                });
+
+                it('should update a single text node', function () {
+                    var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
+                    cursor = patch(cursor, app, 'bar');
+
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('#text');
+                    expect(cursor.vdom[0].value).toBe('bar');
+                });
+
+                it('should delete a single text node', function () {
+                    var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
+                    cursor = patch(cursor, app, null);
+
+                    expect(cursor.vdom.length).toBe(0);
+                });
             });
 
-            it('should update selected text nodes', function () {
-                var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
-                patch(cursor, app, 'bar');
-                expect(cursor.vdom.length).toBe(2);
-                expect(cursor.vdom[0].value).toBe('foo');
-                expect(cursor.vdom[1].value).toBe('bar');
-            });
+            describe('multiple text nodes', function () {
 
-            it('should delete all text nodes', function () {
-                var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
-                patch(cursor, app, null);
-                expect(cursor.vdom.length).toBe(0);
-            });
+                function app(cursor, data) {
+                    if (data !== null) {
+                        if (data !== 'deleteFirst') {
+                            cursor = text(cursor, 0, 'foo');
+                        }
+                        if (data !== 'deleteLast') {
+                            cursor = text(cursor, 1, data);
+                        }
+                    }
 
-            it('should delete first text node', function () {
-                var cursor = patch(new VDomCursor(noopRenderer), app, 'bar');
-                expect(cursor.vdom.length).toBe(2);
-                expect(cursor.vdom[0].value).toBe('foo');
-                expect(cursor.vdom[1].value).toBe('bar');
-                patch(cursor, app, 'deleteFirst');
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].value).toBe('deleteFirst');
-            });
-
-            it('should delete last text node', function () {
-                var cursor = patch(new VDomCursor(noopRenderer), app, 'bar');
-                patch(cursor, app, 'deleteLast');
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].value).toBe('foo');
-            });
-        });
-
-        describe('elements', function () {
-
-            it('should create single element', function () {
-                function app(cursor) {
-                    return element(cursor, 0, 'span');
+                    return cursor;
                 }
 
-                var cursor = patch(new VDomCursor(noopRenderer), app);
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('span');
+                it('should create several text nodes', function () {
+                    var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
+                    expect(cursor.vdom.length).toBe(2);
+                });
+
+                it('should update selected text nodes', function () {
+                    var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
+                    patch(cursor, app, 'bar');
+                    expect(cursor.vdom.length).toBe(2);
+                    expect(cursor.vdom[0].value).toBe('foo');
+                    expect(cursor.vdom[1].value).toBe('bar');
+                });
+
+                it('should delete all text nodes', function () {
+                    var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
+                    patch(cursor, app, null);
+                    expect(cursor.vdom.length).toBe(0);
+                });
+
+                it('should delete first text node', function () {
+                    var cursor = patch(new VDomCursor(noopRenderer), app, 'bar');
+                    expect(cursor.vdom.length).toBe(2);
+                    expect(cursor.vdom[0].value).toBe('foo');
+                    expect(cursor.vdom[1].value).toBe('bar');
+                    patch(cursor, app, 'deleteFirst');
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].value).toBe('deleteFirst');
+                });
+
+                it('should delete last text node', function () {
+                    var cursor = patch(new VDomCursor(noopRenderer), app, 'bar');
+                    patch(cursor, app, 'deleteLast');
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].value).toBe('foo');
+                });
             });
 
-            it('should create multiple elements in a loop', function () {
-                function app(cursor) {
-                    for (var i=0; i<5; i++) {
+            describe('elements', function () {
+
+                it('should create single element', function () {
+                    function app(cursor) {
+                        return element(cursor, 0, 'span');
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('span');
+                });
+
+                it('should create multiple elements in a loop', function () {
+                    function app(cursor) {
+                        for (var i=0; i<5; i++) {
+                            cursor = element(cursor, 0, 'span');
+                        }
+
+                        return cursor;
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app);
+                    expect(cursor.vdom.length).toBe(5);
+                    expect(cursor.vdom[0].type).toBe('span');
+                });
+
+                it('should create and update multiple elements from a function', function () {
+                    function subComponent(cursor) {
+                        cursor = element(cursor, 0, 'span', null, null);
+                        cursor = element(cursor, 1, 'span', null, null);
+
+                        return cursor;
+                    }
+
+                    function app(cursor, callSubComponent) {
+                        cursor = element(cursor, 0, 'div');
+                        if (callSubComponent) {
+                            cursor = view(cursor, 1, subComponent);
+                        }
+                        cursor = element(cursor, 2, 'div');
+
+                        return cursor;
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app, true);
+                    expect(cursor.vdom.length).toBe(3);
+                    expect(cursor.vdom[0].type).toBe('div');
+                    expect(cursor.vdom[1].type).toBe('#view');
+                    expect(cursor.vdom[1].children[0].type).toBe('span');
+                    expect(cursor.vdom[1].children[1].type).toBe('span');
+                    expect(cursor.vdom[2].type).toBe('div');
+
+                    cursor = patch(cursor, app, false);
+                    expect(cursor.vdom.length).toBe(2);
+                    expect(cursor.vdom[0].type).toBe('div');
+                    expect(cursor.vdom[1].type).toBe('div');
+                });
+
+                it('should delete single elements at the begining', function () {
+                    function app(cursor, deleteFirst) {
+                        if (!deleteFirst) {
+                            cursor = element(cursor, 0, 'span');
+                        }
+                        return element(cursor, 1, 'div');
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app, false);
+                    expect(cursor.vdom.length).toBe(2);
+                    expect(cursor.vdom[0].type).toBe('span');
+                    expect(cursor.vdom[1].type).toBe('div');
+
+                    patch(cursor, app, true);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('div');
+                });
+
+                it('should create mix of elements and text nodes', function () {
+                    function appMix(cursor) {
                         cursor = element(cursor, 0, 'span');
+                        cursor = text(cursor, 1, 'foo');
+                        return element(cursor, 2, 'div');
                     }
 
-                    return cursor;
-                }
+                    var cursor = patch(new VDomCursor(noopRenderer), appMix, 'foo');
+                    expect(cursor.vdom.length).toBe(3);
+                    expect(cursor.vdom[0].type).toBe('span');
+                    expect(cursor.vdom[1].value).toBe('foo');
+                    expect(cursor.vdom[2].type).toBe('div');
+                });
 
-                var cursor = patch(new VDomCursor(noopRenderer), app);
-                expect(cursor.vdom.length).toBe(5);
-                expect(cursor.vdom[0].type).toBe('span');
-            });
-
-            it('should create and update multiple elements from a function', function () {
-                function subComponent(cursor) {
-                    cursor = element(cursor, 0, 'span', null, null);
-                    cursor = element(cursor, 1, 'span', null, null);
-
-                    return cursor;
-                }
-
-                function app(cursor, callSubComponent) {
-                    cursor = element(cursor, 0, 'div');
-                    if (callSubComponent) {
-                        cursor = view(cursor, 1, subComponent);
-                    }
-                    cursor = element(cursor, 2, 'div');
-
-                    return cursor;
-                }
-
-                var cursor = patch(new VDomCursor(noopRenderer), app, true);
-                expect(cursor.vdom.length).toBe(3);
-                expect(cursor.vdom[0].type).toBe('div');
-                expect(cursor.vdom[1].type).toBe('#view');
-                expect(cursor.vdom[1].children[0].type).toBe('span');
-                expect(cursor.vdom[1].children[1].type).toBe('span');
-                expect(cursor.vdom[2].type).toBe('div');
-
-                cursor = patch(cursor, app, false);
-                expect(cursor.vdom.length).toBe(2);
-                expect(cursor.vdom[0].type).toBe('div');
-                expect(cursor.vdom[1].type).toBe('div');
-            });
-
-            it('should delete single elements at the begining', function () {
-                function app(cursor, deleteFirst) {
-                    if (!deleteFirst) {
-                        cursor = element(cursor, 0, 'span');
-                    }
-                    return element(cursor, 1, 'div');
-                }
-
-                var cursor = patch(new VDomCursor(noopRenderer), app, false);
-                expect(cursor.vdom.length).toBe(2);
-                expect(cursor.vdom[0].type).toBe('span');
-                expect(cursor.vdom[1].type).toBe('div');
-
-                patch(cursor, app, true);
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('div');
-            });
-
-            it('should create mix of elements and text nodes', function () {
-                function appMix(cursor) {
-                    cursor = element(cursor, 0, 'span');
-                    cursor = text(cursor, 1, 'foo');
-                    return element(cursor, 2, 'div');
-                }
-
-                var cursor = patch(new VDomCursor(noopRenderer), appMix, 'foo');
-                expect(cursor.vdom.length).toBe(3);
-                expect(cursor.vdom[0].type).toBe('span');
-                expect(cursor.vdom[1].value).toBe('foo');
-                expect(cursor.vdom[2].type).toBe('div');
-            });
-
-            it('should replace elements if needed', function() {
-               function swappingElementsApp(cursor, data) {
-                   if (data) {
-                       cursor = element(cursor, 0, 'span');
-                   } else {
-                       cursor = element(cursor, 1, 'div');
+                it('should replace elements if needed', function() {
+                   function swappingElementsApp(cursor, data) {
+                       if (data) {
+                           cursor = element(cursor, 0, 'span');
+                       } else {
+                           cursor = element(cursor, 1, 'div');
+                       }
+                       return cursor;
                    }
-                   return cursor;
-               }
 
-                var cursor = patch(new VDomCursor(noopRenderer), swappingElementsApp, true);
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('span');
+                    var cursor = patch(new VDomCursor(noopRenderer), swappingElementsApp, true);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('span');
 
-                patch(cursor, swappingElementsApp, false);
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('div');
+                    patch(cursor, swappingElementsApp, false);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('div');
+                });
+
+                it('should replace elements by text nodes if needed', function() {
+                    function swappingElementsApp(cursor, data) {
+                        if (data) {
+                            cursor = element(cursor, 0, 'span');
+                        } else {
+                            cursor = text(cursor, 1, 'ha!');
+                        }
+                        return cursor;
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), swappingElementsApp, true);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('span');
+
+                    patch(cursor, swappingElementsApp, false);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('#text');
+                    expect(cursor.vdom[0].value).toBe('ha!');
+                });
             });
 
-            it('should replace elements by text nodes if needed', function() {
-                function swappingElementsApp(cursor, data) {
-                    if (data) {
+            describe('elements with properties', function() {
+
+                it('should support creation of elements with dynamic properties', function() {
+                    function dynamicPropsApp(cursor, data) {
+                        return element(cursor, 0, 'div', null, data);
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), dynamicPropsApp, {id: 'some_id'});
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('div');
+                    expect(cursor.vdom[0].props.id).toBe('some_id');
+
+                    cursor = patch(cursor, dynamicPropsApp, {id: 'some_other_id'});
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('div');
+                    expect(cursor.vdom[0].props.id).toBe('some_other_id');
+                });
+
+                it('should support creation of elements with static and dynamic properties containing dots', function() {
+                    function staticAndDynamicPropsApp(cursor) {
+                        return element(cursor, 0, 'div', null, {'class.foo': true});
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), staticAndDynamicPropsApp, null);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('div');
+                    expect(cursor.vdom[0].props['class.foo']).toBe(true);
+                });
+            });
+
+            describe('elements with children', function() {
+
+                it('should support creation of elements with children', function() {
+                    function childrenApp(cursor) {
+                        cursor = elementStart(cursor, 0, 'div');
                         cursor = element(cursor, 0, 'span');
-                    } else {
-                        cursor = text(cursor, 1, 'ha!');
-                    }
-                    return cursor;
-                }
-
-                var cursor = patch(new VDomCursor(noopRenderer), swappingElementsApp, true);
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('span');
-
-                patch(cursor, swappingElementsApp, false);
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('#text');
-                expect(cursor.vdom[0].value).toBe('ha!');
-            });
-        });
-
-        describe('elements with properties', function() {
-
-            it('should support creation of elements with dynamic properties', function() {
-                function dynamicPropsApp(cursor, data) {
-                    return element(cursor, 0, 'div', null, data);
-                }
-
-                var cursor = patch(new VDomCursor(noopRenderer), dynamicPropsApp, {id: 'some_id'});
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('div');
-                expect(cursor.vdom[0].props.id).toBe('some_id');
-
-                cursor = patch(cursor, dynamicPropsApp, {id: 'some_other_id'});
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('div');
-                expect(cursor.vdom[0].props.id).toBe('some_other_id');
-            });
-
-            it('should support creation of elements with static and dynamic properties containing dots', function() {
-                function staticAndDynamicPropsApp(cursor) {
-                    return element(cursor, 0, 'div', null, {'class.foo': true});
-                }
-
-                var cursor = patch(new VDomCursor(noopRenderer), staticAndDynamicPropsApp, null);
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('div');
-                expect(cursor.vdom[0].props['class.foo']).toBe(true);
-            });
-        });
-
-        describe('elements with children', function() {
-
-            it('should support creation of elements with children', function() {
-                function childrenApp(cursor) {
-                    cursor = elementStart(cursor, 0, 'div');
-                    cursor = element(cursor, 0, 'span');
-                    cursor = element(cursor, 1, 'div');
-                    cursor = childrenEnd(cursor);
-
-                    return cursor;
-                }
-
-                var cursor = patch(new VDomCursor(noopRenderer), childrenApp, null);
-
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('div');
-                expect(cursor.vdom[0].children.length).toBe(2);
-                expect(cursor.vdom[0].children[0].type).toBe('span');
-                expect(cursor.vdom[0].children[1].type).toBe('div');
-            });
-
-
-            it('should support update of children elements', function() {
-                function childrenApp(cursor, keepLastChild) {
-                    cursor = elementStart(cursor, 0, 'div');
-                    cursor = element(cursor, 0, 'span');
-                    if (keepLastChild) {
                         cursor = element(cursor, 1, 'div');
-                    }
-                    cursor = childrenEnd(cursor);
+                        cursor = childrenEnd(cursor);
 
-                    return cursor;
+                        return cursor;
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), childrenApp, null);
+
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('div');
+                    expect(cursor.vdom[0].children.length).toBe(2);
+                    expect(cursor.vdom[0].children[0].type).toBe('span');
+                    expect(cursor.vdom[0].children[1].type).toBe('div');
+                });
+
+
+                it('should support update of children elements', function() {
+                    function childrenApp(cursor, keepLastChild) {
+                        cursor = elementStart(cursor, 0, 'div');
+                        cursor = element(cursor, 0, 'span');
+                        if (keepLastChild) {
+                            cursor = element(cursor, 1, 'div');
+                        }
+                        cursor = childrenEnd(cursor);
+
+                        return cursor;
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), childrenApp, true);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('div');
+                    expect(cursor.vdom[0].children.length).toBe(2);
+                    expect(cursor.vdom[0].children[0].type).toBe('span');
+                    expect(cursor.vdom[0].children[1].type).toBe('div');
+
+                    cursor = patch(cursor, childrenApp, false);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('div');
+                    expect(cursor.vdom[0].children.length).toBe(1);
+                    expect(cursor.vdom[0].children[0].type).toBe('span');
+                });
+            });
+        });
+
+        describe('Renderer interactions', function() {
+            var loggingRenderer;
+
+            function app(cursor, data) {
+                return text(cursor, 0, data);
+            }
+
+            beforeEach(function() {
+                loggingRenderer = new LoggingRenderer();
+            });
+
+            describe('text nodes', function() {
+
+                it('should create text node', function() {
+                    patch(new VDomCursor(loggingRenderer), app, 'foo');
+                    expect(loggingRenderer.instructions.length).toBe(2);
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE #text 1 foo',
+                        'APPEND #root 0 -> #text 1'
+                    ].join('\n'));
+                });
+
+                it('should create and update text node', function() {
+                    var cursor = patch(new VDomCursor(loggingRenderer), app, 'foo');
+                    cursor = patch(cursor, app, 'bar');
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE #text 1 foo',
+                        'APPEND #root 0 -> #text 1',
+                        'UPDATE #text 1 bar'
+                    ].join('\n'));
+                });
+
+                it('should do nothing when value doesnt change', function() {
+                    var cursor = patch(new VDomCursor(loggingRenderer), app, 'foo');
+                    cursor = patch(cursor, app, 'foo');
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE #text 1 foo',
+                        'APPEND #root 0 -> #text 1'
+                    ].join('\n'));
+                });
+
+                it('should remove text nodes from root', function() {
+                    function deleteApp(cursor, keep) {
+                        if (keep) {
+                            return text(cursor, 0, 'here!');
+                        }
+                        return cursor;
+                    }
+
+                    var cursor = patch(new VDomCursor(loggingRenderer), deleteApp, true);
+                    cursor = patch(cursor, deleteApp, false);
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE #text 1 here!',
+                        'APPEND #root 0 -> #text 1',
+                        'DELETE #text 1'
+                    ].join('\n'));
+                });
+
+
+            });
+
+            describe('void elements without properties', function() {
+                function app(cursor, data) {
+                    return element(cursor, 0, 'br');
                 }
 
-                var cursor = patch(new VDomCursor(noopRenderer), childrenApp, true);
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('div');
-                expect(cursor.vdom[0].children.length).toBe(2);
-                expect(cursor.vdom[0].children[0].type).toBe('span');
-                expect(cursor.vdom[0].children[1].type).toBe('div');
+                it('should create void elements and attach them to the root', function() {
+                    patch(new VDomCursor(loggingRenderer), app, 'foo');
 
-                cursor = patch(cursor, childrenApp, false);
-                expect(cursor.vdom.length).toBe(1);
-                expect(cursor.vdom[0].type).toBe('div');
-                expect(cursor.vdom[0].children.length).toBe(1);
-                expect(cursor.vdom[0].children[0].type).toBe('span');
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE br 1',
+                        'APPEND #root 0 -> br 1'
+                    ].join('\n'));
+                });
+
+                it('should do nothing when there is no update to the void node', function() {
+                    var cursor = patch(new VDomCursor(loggingRenderer), app, 'foo');
+                    cursor = patch(cursor, app, 'foo');
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE br 1',
+                        'APPEND #root 0 -> br 1'
+                    ].join('\n'));
+                });
+            });
+
+            describe('void elements with properties', function() {
+                function imgApp(cursor) {
+                    return element(cursor, 0, 'img', {src: 'image.png'});
+                }
+
+                it('should create elements, set properties and attach to the root', function() {
+                    patch(new VDomCursor(loggingRenderer), imgApp, 'foo');
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE img 1',
+                        'SET img 1 src=image.png',
+                        'APPEND #root 0 -> img 1'
+                    ].join('\n'));
+                });
+
+                it('should do noting on update when only static props are present', function() {
+                    var cursor = patch(new VDomCursor(loggingRenderer), imgApp);
+                    cursor = patch(cursor, imgApp);
+                    cursor = patch(cursor, imgApp);
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE img 1',
+                        'SET img 1 src=image.png',
+                        'APPEND #root 0 -> img 1'
+                    ].join('\n'));
+                });
+
+                it('should only update dynamic properties that change', function() {
+                    function imgSizeApp(cursor, isBig) {
+                        return element(cursor, 0, 'img', {src: 'image.png'}, {width: isBig ? 100 : 10, height: 10});
+                    }
+
+                    var cursor = patch(new VDomCursor(loggingRenderer), imgSizeApp, false);
+                    cursor = patch(cursor, imgSizeApp, true);
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE img 1',
+                        'SET img 1 src=image.png',
+                        'SET img 1 width=10',
+                        'SET img 1 height=10',
+                        'APPEND #root 0 -> img 1',
+                        'SET img 1 width=100'
+                    ].join('\n'));
+                });
+
+            });
+
+            describe('parent -> child elements', function() {
+
+               it('should create and remove children for a given parent', function() {
+                   function removeChildApp(c, keepChild) {
+                       c = elementStart(c, 0, 'div');
+                       if (keepChild) {
+                           c = element(c, 0, 'span');
+                       }
+                       c = elementEnd(c);
+
+                       return c;
+                   }
+
+                   var cursor = patch(new VDomCursor(loggingRenderer), removeChildApp, true);
+                   expect(loggingRenderer.instructions.join('\n')).toEqual([
+                       'CREATE div 1',
+                       'APPEND #root 0 -> div 1',
+                       'CREATE span 2',
+                       'APPEND div 1 -> span 2',
+                   ].join('\n'));
+
+                   loggingRenderer.clearInstructions();
+                   cursor = patch(cursor, removeChildApp, false);
+                   expect(loggingRenderer.instructions.join('\n')).toEqual([
+                       'DELETE span 2',
+                   ].join('\n'));
+               })
             });
         });
     </script>

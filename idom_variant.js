@@ -15,8 +15,7 @@ function VDomNode(id, nativeEl, type, value, props) {
 }
 
 function advanceTo(vdom, startIdx, id) {
-    var len = vdom.length;
-    for (var i = startIdx; i < len; i++) {
+    for (var i = startIdx; i <  vdom.length; i++) {
         if (vdom[i].id === id) {
             return i;
         }
@@ -78,7 +77,7 @@ function appendNativeEl(renderer, cursor, nativeEl) {
             renderer.appendChild(parentEl.nativeEl, nativeEl);
         }
     } else {
-        renderer.appendChild(renderer.rootEl, nativeEl);
+        renderer.appendChildToRoot(nativeEl);
     }
 }
 
@@ -110,7 +109,6 @@ function updateNode(renderer, node, value, props) {
 
 function createOrUpdateNode(cursor, elId, type, value, staticProps, props, eventHandlers) {
     var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
-    var node;
 
     if (elementIdx === -1) {
         //not found at the expected position => create
@@ -192,12 +190,11 @@ function patch(cursor, cmptFn, data) {
 
 //TODO(IMPL):
 // - tests for renderer interactions
-// - attrs - should be as simple as prefixing props with attr. => BTW, why Angular is making it so complex? Speed?
 // - need better asserts on VDOM so writing tests is easier
 // - loops with a group of sibiling elements => loops need a view... => ng-content?
 // - loops with stable sorting (keyed sorting)
 // - map props (class, style, ...)
-// - change props to attrs => seems like it is slower, deffer for now
+// - attrs - should be as simple as prefixing props with attr. => BTW, why Angular is making it so complex? Speed?
 
 //TODO(FUNCTIONALITY):
 // - data as multiple arguments
@@ -213,14 +210,15 @@ function patch(cursor, cmptFn, data) {
 
 
 //TODO(PERF):
-// - check if removing children with a known parent is faster
+// - check if removing children with a known parent is any faster
 // - track memory usage - list places where memory gets allocated
 // - skip parts of the tree optimizations
-// - I KNOW many things in the creation mode...
+// - I KNOW many things in the creation mode... well, basically I know that I don't need to call advanceTo()...
 // - I could probably be skipping many comparison when I know that there are no bindings
 // - "static" blocks where I could totally skip comparisons (or even prun / not create the VDOM!)
 // - innerHtml for "static" parts (this would probably "kill" ReactNative-like renderers)
 
 //TODO(FAILED PERF EXPERIMENTS):
+// - change props to attrs in creation => seems like it is slower, deffer for now
 // - explore impact of monomorphic calls (elementStart mostly) => doesn't seem to have any impact...
 // - is rendering to doc fragment any faster? => minimal difference (if any), ~1ms

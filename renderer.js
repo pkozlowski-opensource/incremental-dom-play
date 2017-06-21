@@ -1,30 +1,3 @@
-function NoopRenderer() {}
-
-NoopRenderer.prototype.createComment = function createComment(value) {
-};
-
-NoopRenderer.prototype.createElement = function createElement(value) {
-};
-
-NoopRenderer.prototype.createText = function createText(value) {
-};
-
-NoopRenderer.prototype.updateText = function createText(value) {
-};
-
-NoopRenderer.prototype.appendChild = function appendChild(parentNode, childNode) {
-};
-
-NoopRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
-};
-
-NoopRenderer.prototype.removeNode = function removeNode(node) {
-};
-
-NoopRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
-};
-
-
 function DOMRenderer(document, rootEl) {
     this.document = document;
     this.rootEl = rootEl;
@@ -48,6 +21,10 @@ DOMRenderer.prototype.updateText = function updateText(node, value) {
 
 DOMRenderer.prototype.appendChild = function appendChild(parentNode, childNode) {
     parentNode.appendChild(childNode);
+};
+
+DOMRenderer.prototype.appendChildToRoot = function appendChild(childNode) {
+    this.appendChild(this.rootEl, childNode);
 };
 
 DOMRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
