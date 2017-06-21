@@ -46,3 +46,7 @@ DOMRenderer.prototype.setProperty = function setProperty(node, propName, propVal
         node[propName] = propValue;
     }
 };
+
+DOMRenderer.prototype.addEventListener = function addEventListener(node, eventName, listenerFn) {
+    node.addEventListener(eventName, listenerFn);
+};

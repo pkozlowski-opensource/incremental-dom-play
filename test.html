@@ -44,6 +44,9 @@
         NoopRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
         };
 
+        NoopRenderer.prototype.addEventListener = function addEventListener(node, eventName, listenerFn) {
+        };
+
         function MockNode(id, type, value) {
             this.id = id;
             this.type = type;
@@ -112,6 +115,9 @@
         LoggingRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
             node[propName] = propValue;
             this.instructions.push(`SET ${node} ${propName}=${propValue}`);
+        };
+
+        LoggingRenderer.prototype.addEventListener = function addEventListener(node, eventName, listenerFn) {
         };
 
 

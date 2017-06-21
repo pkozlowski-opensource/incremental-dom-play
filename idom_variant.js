@@ -42,6 +42,13 @@ function setNativeProps(renderer, nativeEl, props) {
     }
 }
 
+function registerEventHandlers(renderer, nativeEl, eventHandlers) {
+    var events = Object.keys(eventHandlers);
+    for (var i=0; i<events.length; i++) {
+        renderer.addEventListener(nativeEl, events[i], eventHandlers[events[i]]);
+    }
+}
+
 function createNativeEl(renderer, type, value, staticProps, props, eventHandlers) {
     var nativeEl;
 
@@ -58,10 +65,7 @@ function createNativeEl(renderer, type, value, staticProps, props, eventHandlers
             setNativeProps(renderer, nativeEl, props);
         }
         if (eventHandlers) {
-            var events = Object.keys(eventHandlers);
-            for (var i=0; i<events.length; i++) {
-                nativeEl.addEventListener(events[i], eventHandlers[events[i]]);
-            }
+            registerEventHandlers(renderer, nativeEl, eventHandlers);
         }
     }
 
@@ -156,7 +160,7 @@ function childrenStart(cursor) {
         }
         return new VDomCursor(cursor.renderer, cursor.vdom[childrenIdx].children, 0, cursor);
     } else {
-        // children attatched to the root
+        // children attached to the root
         return cursor;
     }
 }
@@ -189,7 +193,7 @@ function patch(cursor, cmptFn, data) {
 }
 
 //TODO(IMPL):
-// - tests for renderer interactions
+// - tests for renderer interactions (remaining: event handlers, views)
 // - need better asserts on VDOM so writing tests is easier
 // - loops with a group of sibiling elements => loops need a view... => ng-content?
 // - loops with stable sorting (keyed sorting)
@@ -197,8 +201,8 @@ function patch(cursor, cmptFn, data) {
 // - attrs - should be as simple as prefixing props with attr. => BTW, why Angular is making it so complex? Speed?
 
 //TODO(FUNCTIONALITY):
-// - data as multiple arguments
 // - refresh cycles / uni-directional data flow
+// - data as multiple arguments
 // - HTML compiler
 // - components (inputs, outputs, should the element stay in the DOM)
 // - projection for components
