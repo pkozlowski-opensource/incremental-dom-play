@@ -38,15 +38,19 @@ function deleteNodes(renderer, vdom, currentIdx, count) {
 
 function setNativeProps(renderer, nativeEl, props) {
     var propNames = Object.keys(props);
-    for (var i=0; i<propNames.length; i++) {
+    var i = propNames.length;
+
+    while (i--) {
         renderer.setProperty(nativeEl, propNames[i], props[propNames[i]]);
     }
 }
 
 function registerEventHandlers(renderer, nativeEl, eventHandlers) {
     var events = Object.keys(eventHandlers);
-    for (var i=0; i<events.length; i++) {
-        renderer.addEventListener(nativeEl, events[i], eventHandlers[events[i]]);
+    var i = events.length;
+
+    while (i--) {
+      renderer.addEventListener(nativeEl, events[i], eventHandlers[events[i]]);
     }
 }
 
