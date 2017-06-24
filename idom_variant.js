@@ -1,8 +1,9 @@
-function VDomCursor(renderer, vdom, currentIdx, parentCursor) {
+function VDomCursor(renderer, vdom, currentIdx, parentCursor, creationMode) {
     this.renderer = renderer;
     this.vdom = vdom ? vdom : [];
     this.currentIdx = currentIdx != null ? currentIdx : 0;
     this.parentCursor = parentCursor;
+    this.creationMode = creationMode || false;
 }
 
 function VDomNode(id, nativeEl, type, value, props) {
@@ -112,18 +113,29 @@ function updateNode(renderer, node, value, props) {
 }
 
 function createOrUpdateNode(cursor, elId, type, value, staticProps, props, eventHandlers) {
-    var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
+    if (cursor.creationMode) {
 
-    if (elementIdx === -1) {
-        //not found at the expected position => create
-        createNode(cursor, elId, type, value, staticProps, props, eventHandlers);
+       var nativeEl = createNativeEl(cursor.renderer, type, value, staticProps, props, eventHandlers);
+       appendNativeEl(cursor.renderer, cursor, nativeEl);
+
+       cursor.vdom.push(new VDomNode(elId, nativeEl, type, value, props));
+
     } else {
-        // found: update
-        updateNode(cursor.renderer, cursor.vdom[elementIdx], value, props);
-    }
 
-    if (elementIdx > cursor.currentIdx) {
-        deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
+        var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
+
+        if (elementIdx === -1) {
+            //not found at the expected position => create
+            createNode(cursor, elId, type, value, staticProps, props, eventHandlers);
+        } else {
+            // found: update
+            updateNode(cursor.renderer, cursor.vdom[elementIdx], value, props);
+        }
+
+        if (elementIdx > cursor.currentIdx) {
+            deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
+        }
+
     }
 
     cursor.currentIdx++;
@@ -144,12 +156,11 @@ function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
 function view(cursor, elId, viewFn, data) {
     cursor = createOrUpdateNode(cursor, elId, '#view', null, null, null);
     cursor = childrenStart(cursor);
-    return childrenEnd(viewFn(cursor, data)); // TODO: data and context for the view
+    return childrenEnd(viewFn(cursor, data));
 }
 
 function elementStart(cursor, elId, tagName, staticProps, props, eventHandlers) {
-    cursor = element(cursor, elId, tagName, staticProps, props, eventHandlers);
-    return childrenStart(cursor);
+    return childrenStart(element(cursor, elId, tagName, staticProps, props, eventHandlers));
 }
 
 function childrenStart(cursor) {
@@ -158,7 +169,7 @@ function childrenStart(cursor) {
         if (!cursor.vdom[childrenIdx].children) {
             cursor.vdom[childrenIdx].children = [];
         }
-        return new VDomCursor(cursor.renderer, cursor.vdom[childrenIdx].children, 0, cursor);
+        return new VDomCursor(cursor.renderer, cursor.vdom[childrenIdx].children, 0, cursor, cursor.vdom[childrenIdx].children.length === 0);
     } else {
         // children attached to the root
         return cursor;
@@ -173,7 +184,7 @@ function childrenEnd(cursor) {
     }
 
     cursor.parentCursor = null;
-    
+
     return parentCursor || cursor;
 }
 
@@ -199,30 +210,3 @@ function patch(cursor, cmptFn, data) {
 // - loops with stable sorting (keyed sorting)
 // - map props (class, style, ...)
 // - attrs - should be as simple as prefixing props with attr. => BTW, why Angular is making it so complex? Speed?
-
-//TODO(FUNCTIONALITY):
-// - refresh cycles / uni-directional data flow
-// - data as multiple arguments
-// - HTML compiler
-// - components (inputs, outputs, should the element stay in the DOM)
-// - projection for components
-// - namespaced elements (SVG, Math etc.)
-// - web components compatibility
-// - server-side rendering (hydration)
-
-//TODO(IDEAS):
-
-
-//TODO(PERF):
-// - check if removing children with a known parent is any faster
-// - track memory usage - list places where memory gets allocated
-// - skip parts of the tree optimizations
-// - I KNOW many things in the creation mode... well, basically I know that I don't need to call advanceTo()...
-// - I could probably be skipping many comparison when I know that there are no bindings
-// - "static" blocks where I could totally skip comparisons (or even prun / not create the VDOM!)
-// - innerHtml for "static" parts (this would probably "kill" ReactNative-like renderers)
-
-//TODO(FAILED PERF EXPERIMENTS):
-// - change props to attrs in creation => seems like it is slower, deffer for now
-// - explore impact of monomorphic calls (elementStart mostly) => doesn't seem to have any impact...
-// - is rendering to doc fragment any faster? => minimal difference (if any), ~1ms
