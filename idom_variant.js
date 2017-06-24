@@ -54,47 +54,39 @@ function registerEventHandlers(renderer, nativeEl, eventHandlers) {
     }
 }
 
-function createNativeEl(renderer, type, value, staticProps, props, eventHandlers) {
-    var nativeEl;
-
-    if (type === '#text') {
-        nativeEl = renderer.createText(value);
-    } else if (type === '#view') {
-        nativeEl = renderer.createComment('view');
-    } else {
-        nativeEl = renderer.createElement(type);
-        if (staticProps) {
-            setNativeProps(renderer, nativeEl, staticProps);
-        }
-        if (props) {
-            setNativeProps(renderer, nativeEl, props);
-        }
-        if (eventHandlers) {
-            registerEventHandlers(renderer, nativeEl, eventHandlers);
-        }
-    }
-
-    return nativeEl;
+function createNativeText(renderer, type, value, staticProps, props, eventHandlers) {
+  return renderer.createText(value);
 }
 
-function appendNativeEl(renderer, cursor, nativeEl) {
+function createNativeComment(renderer, type, value, staticProps, props, eventHandlers) {
+  return renderer.createComment('view');
+}
+
+function createNativeElement(renderer, type, value, staticProps, props, eventHandlers) {
+  var nativeEl = renderer.createElement(type);
+  if (staticProps) {
+      setNativeProps(renderer, nativeEl, staticProps);
+  }
+  if (props) {
+      setNativeProps(renderer, nativeEl, props);
+  }
+  if (eventHandlers) {
+      registerEventHandlers(renderer, nativeEl, eventHandlers);
+  }
+  return nativeEl;
+}
+
+function appendNativeEl(cursor, nativeEl) {
     if (cursor.parentCursor) {
         var parentEl = cursor.parentCursor.vdom[cursor.parentCursor.currentIdx -1];
         if (parentEl.type === '#view') {
-            renderer.insertBefore(parentEl.nativeEl, nativeEl);
+            cursor.renderer.insertBefore(parentEl.nativeEl, nativeEl);
         } else {
-            renderer.appendChild(parentEl.nativeEl, nativeEl);
+            cursor.renderer.appendChild(parentEl.nativeEl, nativeEl);
         }
     } else {
-        renderer.appendChildToRoot(nativeEl);
+        cursor.renderer.appendChildToRoot(nativeEl);
     }
-}
-
-function createNode(cursor, elId, type, value, staticProps, props, eventHandlers) {
-    var nativeEl = createNativeEl(cursor.renderer, type, value, staticProps, props, eventHandlers);
-    appendNativeEl(cursor.renderer, cursor, nativeEl);
-
-    cursor.vdom.splice(cursor.currentIdx, 0, new VDomNode(elId, nativeEl, type, value, props));
 }
 
 function updateNode(renderer, node, value, props) {
@@ -116,11 +108,13 @@ function updateNode(renderer, node, value, props) {
     }
 }
 
-function createOrUpdateNode(cursor, elId, type, value, staticProps, props, eventHandlers) {
+function createOrUpdateNode(cursor, elId, type, createFn, value, staticProps, props, eventHandlers) {
+    var nativeEl;
+
     if (cursor.creationMode) {
 
-       var nativeEl = createNativeEl(cursor.renderer, type, value, staticProps, props, eventHandlers);
-       appendNativeEl(cursor.renderer, cursor, nativeEl);
+       nativeEl = createFn(cursor.renderer, type, value, staticProps, props, eventHandlers);
+       appendNativeEl(cursor, nativeEl);
 
        cursor.vdom.push(new VDomNode(elId, nativeEl, type, value, props));
 
@@ -130,7 +124,10 @@ function createOrUpdateNode(cursor, elId, type, value, staticProps, props, event
 
         if (elementIdx === -1) {
             //not found at the expected position => create
-            createNode(cursor, elId, type, value, staticProps, props, eventHandlers);
+            nativeEl = createFn(cursor.renderer, type, value, staticProps, props, eventHandlers);
+            appendNativeEl(cursor, nativeEl);
+            cursor.vdom.splice(cursor.currentIdx, 0, new VDomNode(elId, nativeEl, type, value, props));
+
         } else {
             // found: update
             updateNode(cursor.renderer, cursor.vdom[elementIdx], value, props);
@@ -149,16 +146,16 @@ function createOrUpdateNode(cursor, elId, type, value, staticProps, props, event
 
 
 function text(cursor, elId, value) {
-    return createOrUpdateNode(cursor, elId, '#text', value, null);
+    return createOrUpdateNode(cursor, elId, '#text', createNativeText, value, null);
 }
 
 
 function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
-    return createOrUpdateNode(cursor, elId, tagName, null, staticProps, props, eventHandlers);
+    return createOrUpdateNode(cursor, elId, tagName, createNativeElement, null, staticProps, props, eventHandlers);
 }
 
 function view(cursor, elId, viewFn, data) {
-    cursor = createOrUpdateNode(cursor, elId, '#view', null, null, null);
+    cursor = createOrUpdateNode(cursor, elId, '#view', createNativeComment, null, null, null);
     cursor = childrenStart(cursor);
     return childrenEnd(viewFn(cursor, data));
 }
