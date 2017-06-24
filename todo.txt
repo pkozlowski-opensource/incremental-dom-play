@@ -1,0 +1,24 @@
+ALGORITHM
+-----------------------------------
+- better understand on how I can take advantage of the creation mode knowledge
+- what happens with sibiling nodes?
+- how would I go about the "refresh" functionality?
+
+IMPL
+-----------------------------------
+-
+
+PERF (ideas to test)
+-----------------------------------
+- pass a create / update function to the createOrUpdateNode (this will eliminate if / else on type)
+- change generated code signature so I'm passing around objects ready to insert into VDOM
+- use byte-masking for type instead of strings (will result in an additional field in VDOM)
+- have different VDOM node types to save memory (this will make those polymorphic, although still a limited set)
+- cache cursors
+- attribute / property / class / style split: [attr.foo]="exp", [class.foo]="exp", [style.foo]="exp", [foo]="exp"
+- create different methods for elements (with / without properties etc.) => there would be many combinations!
+
+FUNCTIONALITY
+-----------------------------------
+- refresh / refreshAll
+- attribute / property split
