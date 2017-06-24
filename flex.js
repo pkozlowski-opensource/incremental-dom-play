@@ -7,10 +7,13 @@ function elWithText(cursor, idx, tagName, value, classes) {
 }
 
 function fareFamilyHeader(cursor, fareFamilies) {
+    var fareFamily;
+
     cursor = elementStart(cursor, 0, 'div', {className: 'fare-families'});
 
         cursor = elementStart(cursor, 0, 'div', {className: 'fare-family-names'});
-        for (let fareFamily of fareFamilies) {
+        for (var i=0; i<fareFamilies.length; i++) {
+            fareFamily = fareFamilies[i];
             cursor = elementStart(cursor, 0, 'h4');
             cursor = text(cursor, 0, fareFamily.name);
             cursor = elementEnd(cursor);
@@ -18,7 +21,8 @@ function fareFamilyHeader(cursor, fareFamilies) {
         cursor = elementEnd(cursor);
 
         cursor = elementStart(cursor, 1, 'div', {className: 'fare-family-description'});
-        for (let fareFamily of fareFamilies) {
+        for (var i=0; i<fareFamilies.length; i++) {
+            fareFamily = fareFamilies[i];
             cursor = elementStart(cursor, 0, 'div');
             cursor = text(cursor, 0, fareFamily.shortDescription);
             cursor = elementEnd(cursor);
@@ -52,8 +56,8 @@ function flightSummary(cursor, segment) {
 
         cursor = elementStart(cursor, 1, 'footer');
             cursor = elementStart(cursor, 0, 'div', {className: "flight-number as-link with-icon"});
-                cursor = element(cursor, 0, 'img', {className: 'icon', width: 14, height: 14, src: `assets/airlinesicons/${segment.airline.code.toLowerCase()}.png`});
-                cursor = text(cursor, 1, `${segment.airline.code.toUpperCase()}${segment.flightNumber}`);
+                cursor = element(cursor, 0, 'img', {className: 'icon', width: 14, height: 14, src: "assets/airlinesicons/" + segment.airline.code.toLowerCase() + ".png"});
+                cursor = text(cursor, 1, segment.airline.code.toUpperCase() + segment.flightNumber);
             cursor = elementEnd(cursor);
             cursor = elementStart(cursor, 1, 'div', {className: "flight-stops as-link"});
                 cursor = text(cursor, 0, '0 stop(s)');
@@ -83,7 +87,7 @@ function fare(cursor, data) {
 
     function amountForFare() {
         var recommendation = getRecommendation(fareFamilly.code);
-        return recommendation ? `$${Math.ceil(recommendation.amountForAll)}` : '';
+        return recommendation ? '$' + Math.ceil(recommendation.amountForAll) : '';
     }
 
     function lastSeatsAvailable(fareFamilly) {
@@ -160,23 +164,27 @@ function fareDetails(cursor, data) {
 }
 
 function itineraryAvail(cursor, data) {
-    var operatedSegments =  data.itinerary.segments.filter(segment => segment.isOperated);
+    var operatedSegments =  data.itinerary.segments.filter(function(segment) {
+     return segment.isOperated;
+    });
 
     cursor = elementStart(cursor, 0, 'div', {className: 'itinerary'});
 
         cursor = elementStart(cursor, 0, 'div', {className: 'itinerary-header'});
             cursor = elementStart(cursor, 0, 'div', {className: 'itinerary-info right-delimiter'});
 
-                for (let segment of data.itinerary.segments) {
+                for (var i=0; i< data.itinerary.segments.length; i++) {
+                    var segment =  data.itinerary.segments[i];
                     cursor = view(cursor, 0, flightSummary, segment);
                 }
 
                 cursor = elementStart(cursor, 1, 'strong', {className: 'total-duration'});
-                cursor = text(cursor, 0, `Total duration ${data.itinerary.duration}`);
+                cursor = text(cursor, 0, 'Total duration ' + data.itinerary.duration);
                 cursor = elementEnd(cursor);
             cursor = elementEnd(cursor);
 
-            for (let fareFamilly of data.fareFamilies) {
+            for (var j=0; j<data.fareFamilies.length; j++) {
+                var  fareFamilly = data.fareFamilies[j];
                 cursor = view(cursor, 1, fare, {
                     fareFamilly : fareFamilly, 
                     itinerary: data.itinerary
@@ -191,15 +199,16 @@ function itineraryAvail(cursor, data) {
     cursor = elementEnd(cursor);
 
     if (operatedSegments.length) {
-        for (let segment of operatedSegments) {
+        for (var k=0; k<operatedSegments.length; k++) {
+            var segment = operatedSegments[k];
             cursor = elementStart(cursor, 2, 'div', {className: 'flight-operated with-icon'});
             cursor = element(cursor, 0, 'img', {
                 className: 'icon',
-                src: `assets/airlinesicons/${segment.airline.code.toLowerCase()}.png`,
+                src: 'assets/airlinesicons/' + segment.airline.code.toLowerCase() + '.png',
                 width: 14,
                 height: 14
             });
-            cursor = text(cursor, 1, `Flight ${segment.airline.code.toUpperCase()}${segment.flightNumber} is operated by ${segment.operatedBy.airlineName}`);
+            cursor = text(cursor, 1, 'Flight ' + segment.airline.code.toUpperCase() + segment.flightNumber + ' is operated by ' + segment.operatedBy.airlineName);
             cursor = elementEnd(cursor);
         }
     }
@@ -212,11 +221,13 @@ function app(cursor, data) {
 
     var avail = data.availability;
 
-    for (let bound of avail.bounds) {
+    for (var i=0; i<avail.bounds.length; i++) {
+        var bound = avail.bounds[i];
         cursor = elementStart(cursor, 1, 'div');
         cursor = view(cursor, 0, fareFamilyHeader, avail.fareFamilies);
-        for (let itinerary of bound.itineraries) {
-            cursor = view(cursor, 1, itineraryAvail, {itinerary, fareFamilies: avail.fareFamilies});
+        for (var j=0; j<bound.itineraries.length; j++) {
+            var itinerary = bound.itineraries[j];
+            cursor = view(cursor, 1, itineraryAvail, {itinerary: itinerary, fareFamilies: avail.fareFamilies});
         }
         cursor = elementEnd(cursor);
     }
