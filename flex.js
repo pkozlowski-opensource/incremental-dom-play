@@ -213,10 +213,12 @@ function app(cursor, data) {
     var avail = data.availability;
 
     for (let bound of avail.bounds) {
-        cursor = view(cursor, 1, fareFamilyHeader, avail.fareFamilies);
+        cursor = elementStart(cursor, 1, 'div');
+        cursor = view(cursor, 0, fareFamilyHeader, avail.fareFamilies);
         for (let itinerary of bound.itineraries) {
-            cursor = view(cursor, 2, itineraryAvail, {itinerary, fareFamilies: avail.fareFamilies});
+            cursor = view(cursor, 1, itineraryAvail, {itinerary, fareFamilies: avail.fareFamilies});
         }
+        cursor = elementEnd(cursor);
     }
 
     cursor = elementEnd(cursor);
