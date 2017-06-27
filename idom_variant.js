@@ -12,7 +12,7 @@ function VDomNode(id, nativeEl, type, value, props) {
     this.type = type;
     this.value = value;
     this.props = props;
-    this.children = null;
+    this.children = undefined;
 }
 
 function advanceTo(vdom, startIdx, id) {
@@ -141,7 +141,7 @@ function text(cursor, elId, value) {
       var nativeEl = cursor.renderer.createText(value);
       appendNativeEl(cursor, nativeEl);
 
-      cursor.vdom.push(new VDomNode(elId, nativeEl, "#text", value, null));
+      cursor.vdom.push(new VDomNode(elId, nativeEl, "#text", value, undefined));
       cursor.currentIdx++;
 
       return cursor;
@@ -165,7 +165,7 @@ function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
       }
       appendNativeEl(cursor, nativeEl);
 
-      cursor.vdom.push(new VDomNode(elId, nativeEl, tagName, null, props));
+      cursor.vdom.push(new VDomNode(elId, nativeEl, tagName, undefined, props));
       cursor.currentIdx++;
 
       return cursor;
@@ -179,10 +179,10 @@ function view(cursor, elId, viewFn, data) {
         var nativeEl = cursor.renderer.createComment('view');
        appendNativeEl(cursor, nativeEl);
 
-      cursor.vdom.push(new VDomNode(elId, nativeEl, "#view", null, null));
+      cursor.vdom.push(new VDomNode(elId, nativeEl, "#view", undefined, undefined));
       cursor.currentIdx++;
     } else {
-      cursor = createOrUpdateNode(cursor, elId, '#view', createNativeComment, null, null, null);
+      cursor = createOrUpdateNode(cursor, elId, '#view', createNativeComment, undefined, undefined, undefined);
     }
 
     cursor = childrenStart(cursor);
@@ -213,7 +213,7 @@ function childrenEnd(cursor) {
         deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, cursor.vdom.length - cursor.currentIdx);
     }
 
-    cursor.parentCursor = null;
+    cursor.parentCursor = undefined;
 
     return parentCursor || cursor;
 }
