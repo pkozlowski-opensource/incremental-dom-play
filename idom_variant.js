@@ -12,7 +12,7 @@ function VDomNode(id, nativeEl, type, value, props) {
     this.type = type;
     this.value = value;
     this.props = props;
-    this.children = undefined;
+    this.children = [];
 }
 
 function advanceTo(vdom, startIdx, id) {
@@ -49,7 +49,7 @@ function setNativeProps(renderer, nativeEl, props) {
 
 function registerEventHandlers(renderer, nativeEl, eventHandlers) {
     var events = Object.keys(eventHandlers);
-    var len = eventHandlers.length;
+    var len = events.length;
 
     for (var i = 0; i < len; i++) {
       renderer.addEventListener(nativeEl, events[i], eventHandlers[events[i]]);
@@ -100,13 +100,17 @@ function updateNode(renderer, node, value, props) {
 
     // update props
     if (props) {
-        // TODO: refactor to avoid forEach usage
-        Object.keys(props).forEach(function(propKey) {
+        var propNames = Object.keys(props);
+        var len = propNames.length;
+        var propKey;
+
+        for (var i=0; i<len; i++) {
+            propKey = propNames[i];
             if (node.props[propKey] !== props[propKey]) {
                 node.props[propKey] = props[propKey];
                 renderer.setProperty(node.nativeEl, propKey, props[propKey])
             }
-        });
+        }
     }
 }
 
@@ -196,9 +200,6 @@ function elementStart(cursor, elId, tagName, staticProps, props, eventHandlers) 
 function childrenStart(cursor) {
     if (cursor.currentIdx) {
         var childrenIdx = cursor.currentIdx - 1;
-        if (!cursor.vdom[childrenIdx].children) {
-            cursor.vdom[childrenIdx].children = [];
-        }
         return new VDomCursor(cursor.renderer, cursor.vdom[childrenIdx].children, 0, cursor, cursor.vdom[childrenIdx].children.length === 0);
     } else {
         // children attached to the root
