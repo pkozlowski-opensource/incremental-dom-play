@@ -546,8 +546,8 @@
                     expect(loggingRenderer.instructions.join('\n')).toEqual([
                         'CREATE img 1',
                         'SET img 1 src=image.png',
-                        'SET img 1 height=10',
                         'SET img 1 width=10',
+                        'SET img 1 height=10',
                         'APPEND #root 0 -> img 1',
                         'SET img 1 width=100'
                     ].join('\n'));
