@@ -462,7 +462,7 @@
                     ].join('\n'));
                 });
 
-                it('should remove text nodes from root', function() {
+                it('should remove text nodes from the start', function() {
                     function deleteApp(cursor, keep) {
                         if (keep) {
                             return text(cursor, 0, 'here!');
@@ -477,6 +477,51 @@
                         'CREATE #text 1 here!',
                         'APPEND #root 0 -> #text 1',
                         'DELETE #text 1'
+                    ].join('\n'));
+                });
+
+                it('should remove text nodes in the middle', function() {
+                    function deleteApp(cursor, keep) {
+                        cursor = text(cursor, 0, 'before');
+                        if (keep) {
+                            cursor = text(cursor, 1, 'here!');
+                        }
+                        cursor = text(cursor, 2, 'after');
+                        return cursor;
+                    }
+
+                    var cursor = patch(new VDomCursor(loggingRenderer), deleteApp, true);
+                    cursor = patch(cursor, deleteApp, false);
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE #text 1 before',
+                        'APPEND #root 0 -> #text 1',
+                        'CREATE #text 2 here!',
+                        'APPEND #root 0 -> #text 2',
+                        'CREATE #text 3 after',
+                        'APPEND #root 0 -> #text 3',
+                        'DELETE #text 2'
+                    ].join('\n'));
+                });
+
+                it('should remove text nodes from the end', function() {
+                    function deleteApp(cursor, keep) {
+                        cursor = text(cursor, 0, 'before');
+                        if (keep) {
+                            cursor = text(cursor, 1, 'here!');
+                        }
+                        return cursor;
+                    }
+
+                    var cursor = patch(new VDomCursor(loggingRenderer), deleteApp, true);
+                    cursor = patch(cursor, deleteApp, false);
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE #text 1 before',
+                        'APPEND #root 0 -> #text 1',
+                        'CREATE #text 2 here!',
+                        'APPEND #root 0 -> #text 2',
+                        'DELETE #text 2'
                     ].join('\n'));
                 });
 

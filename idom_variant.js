@@ -56,28 +56,6 @@ function registerEventHandlers(renderer, nativeEl, eventHandlers) {
     }
 }
 
-function createNativeText(renderer, type, value, staticProps, props, eventHandlers) {
-  return renderer.createText(value);
-}
-
-function createNativeComment(renderer, type, value, staticProps, props, eventHandlers) {
-  return renderer.createComment('view');
-}
-
-function createNativeElement(renderer, type, value, staticProps, props, eventHandlers) {
-  var nativeEl = renderer.createElement(type);
-  if (staticProps != null) {
-      setNativeProps(renderer, nativeEl, staticProps);
-  }
-  if (props != null) {
-      setNativeProps(renderer, nativeEl, props);
-  }
-  if (eventHandlers != null) {
-      registerEventHandlers(renderer, nativeEl, eventHandlers);
-  }
-  return nativeEl;
-}
-
 function appendNativeEl(cursor, nativeEl) {
     if (cursor.parentCursor) {
         var parentEl = cursor.parentCursor.vdom[cursor.parentCursor.currentIdx -1];
@@ -89,50 +67,41 @@ function appendNativeEl(cursor, nativeEl) {
     } else {
         cursor.renderer.appendChildToRoot(nativeEl);
     }
+
+    return nativeEl;
 }
 
-function updateNode(renderer, node, value, props) {
-    // update value
-    if (node.value !== value) {
-        node.value = value;
-        renderer.updateText(node.nativeEl, value);
-    }
-
-    // update props
-    if (props) {
-        var propNames = Object.keys(props);
-        var len = propNames.length;
-        var propKey, propValue;
-
-        for (var i=0; i<len; i++) {
-            propKey = propNames[i];
-            propValue = props[propKey];
-            if (node.props[propKey] !== propValue) {
-                node.props[propKey] = propValue;
-                renderer.setProperty(node.nativeEl, propKey, propValue)
-            }
-        }
-    }
+function createTextVNode(cursor, elId, value) {
+  var nativeEl = appendNativeEl(cursor, cursor.renderer.createText(value));
+  return new VDomNode(elId, nativeEl, "#text", value, undefined);
 }
 
-function createOrUpdateNode(cursor, elId, type, createFn, value, staticProps, props, eventHandlers) {
-    var nativeEl;
+function text(cursor, elId, value) {
+    if (cursor.creationMode) {
 
-    var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
-
-    if (elementIdx === -1) {
-        //not found at the expected position => create
-        nativeEl = createFn(cursor.renderer, type, value, staticProps, props, eventHandlers);
-        appendNativeEl(cursor, nativeEl);
-        cursor.vdom.splice(cursor.currentIdx, 0, new VDomNode(elId, nativeEl, type, value, props));
+      cursor.vdom[cursor.vdom.length] = createTextVNode(cursor, elId, value);
 
     } else {
-        // found: update
-        updateNode(cursor.renderer, cursor.vdom[elementIdx], value, props);
-    }
 
-    if (elementIdx > cursor.currentIdx) {
-        deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
+      var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
+
+      if (elementIdx === -1) {
+
+        //not found at the expected position => create
+        cursor.vdom.splice(cursor.currentIdx, 0, createTextVNode(cursor, elId, value));
+
+      } else {
+          // found: update
+          var vDomNode = cursor.vdom[elementIdx];
+          if (vDomNode.value !== value) {
+              vDomNode.value = value;
+              cursor.renderer.updateText(vDomNode.nativeEl, value);
+          }
+      }
+
+      if (elementIdx > cursor.currentIdx) {
+          deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
+      }
     }
 
     cursor.currentIdx++;
@@ -140,55 +109,94 @@ function createOrUpdateNode(cursor, elId, type, createFn, value, staticProps, pr
     return cursor;
 }
 
+function createElementVNode(cursor, elId, tagName, staticProps, props, eventHandlers) {
+  var nativeEl = cursor.renderer.createElement(tagName);
 
-function text(cursor, elId, value) {
-    if (cursor.creationMode) {
-      var nativeEl = cursor.renderer.createText(value);
-      appendNativeEl(cursor, nativeEl);
+  if (staticProps != null) {
+     setNativeProps(cursor.renderer, nativeEl, staticProps);
+  }
+  if (props != null) {
+      setNativeProps(cursor.renderer, nativeEl, props);
+  }
+  if (eventHandlers != null) {
+      registerEventHandlers(cursor.renderer, nativeEl, eventHandlers);
+  }
+  appendNativeEl(cursor, nativeEl);
 
-      cursor.vdom[cursor.vdom.length] = new VDomNode(elId, nativeEl, "#text", value, undefined);
-      cursor.currentIdx++;
-
-      return cursor;
-    } else {
-      return createOrUpdateNode(cursor, elId, '#text', createNativeText, value, undefined, undefined);
-    }
+  return new VDomNode(elId, nativeEl, tagName, undefined, props);
 }
-
 
 function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
     if (cursor.creationMode) {
-      var nativeEl = cursor.renderer.createElement(tagName);
-      if (staticProps != null) {
-         setNativeProps(cursor.renderer, nativeEl, staticProps);
-      }
-      if (props != null) {
-          setNativeProps(cursor.renderer, nativeEl, props);
-      }
-      if (eventHandlers != null) {
-          registerEventHandlers(cursor.renderer, nativeEl, eventHandlers);
-      }
-      appendNativeEl(cursor, nativeEl);
 
-      cursor.vdom[cursor.vdom.length] = new VDomNode(elId, nativeEl, tagName, undefined, props);
-      cursor.currentIdx++;
+      cursor.vdom[cursor.vdom.length] = createElementVNode(cursor, elId, tagName, staticProps, props, eventHandlers);
 
-      return cursor;
     } else {
-      return createOrUpdateNode(cursor, elId, tagName, createNativeElement, undefined, staticProps, props, eventHandlers);
+
+      var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
+
+      if (elementIdx === -1) {
+          cursor.vdom.splice(cursor.currentIdx, 0, createElementVNode(cursor, elId, tagName, staticProps, props, eventHandlers));
+
+      } else {
+        // found: update
+        var vDomNode = cursor.vdom[elementIdx];
+        if (props) {
+            var propNames = Object.keys(props);
+            var len = propNames.length;
+            var propKey, propValue;
+
+            for (var i=0; i<len; i++) {
+                propKey = propNames[i];
+                propValue = props[propKey];
+                if (vDomNode.props[propKey] !== propValue) {
+                    vDomNode.props[propKey] = propValue;
+                    cursor.renderer.setProperty(vDomNode.nativeEl, propKey, propValue)
+                }
+            }
+        }
+      }
+
+      if (elementIdx > cursor.currentIdx) {
+          deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
+      }
+
     }
+
+    cursor.currentIdx++;
+    return cursor;
+}
+
+function createViewVDomNode(cursor, elId, viewFn, data) {
+  var nativeEl = appendNativeEl(cursor, cursor.renderer.createComment('view'));
+  return new VDomNode(elId, nativeEl, "#view", undefined, undefined);
 }
 
 function view(cursor, elId, viewFn, data) {
     if (cursor.creationMode) {
-        var nativeEl = cursor.renderer.createComment('view');
-       appendNativeEl(cursor, nativeEl);
 
-      cursor.vdom[cursor.vdom.length] = new VDomNode(elId, nativeEl, "#view", undefined, undefined);
-      cursor.currentIdx++;
+      cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId, viewFn, data);
+
     } else {
-      cursor = createOrUpdateNode(cursor, elId, '#view', createNativeComment, undefined, undefined, undefined);
+
+      var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
+
+      if (elementIdx === -1) {
+        //not found at the expected position => create
+        cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, viewFn, data));
+      }
+
+      //no update for views - for now!
+      //ideas:
+      //- "OnPush"
+      //- allow swapping viewFn
+
+      if (elementIdx > cursor.currentIdx) {
+          deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
+      }
     }
+
+    cursor.currentIdx++;
 
     cursor = childrenStart(cursor);
     return childrenEnd(viewFn(cursor, data));
@@ -236,6 +244,7 @@ function patch(cursor, cmptFn, data) {
 }
 
 //TODO(IMPL):
+// - refactor code around root node
 // - tests for renderer interactions (remaining: event handlers, views)
 // - need better asserts on VDOM so writing tests is easier
 // - loops with a group of sibiling elements => loops need a view... => ng-content?
