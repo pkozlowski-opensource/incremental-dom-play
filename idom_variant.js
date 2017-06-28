@@ -1,7 +1,7 @@
-function VDomCursor(renderer, vdom, currentIdx, parentCursor, creationMode) {
+function VDomCursor(renderer, vdom, parentCursor, creationMode) {
     this.renderer = renderer;
-    this.vdom = vdom ? vdom : [];
-    this.currentIdx = currentIdx != null ? currentIdx : 0;
+    this.vdom = vdom || [];
+    this.currentIdx = 0;
     this.parentCursor = parentCursor;
     this.creationMode = creationMode || false;
 }
@@ -207,13 +207,8 @@ function elementStart(cursor, elId, tagName, staticProps, props, eventHandlers) 
 }
 
 function childrenStart(cursor) {
-    if (cursor.currentIdx) {
-        var childrenIdx = cursor.currentIdx - 1;
-        return new VDomCursor(cursor.renderer, cursor.vdom[childrenIdx].children, 0, cursor, cursor.vdom[childrenIdx].children.length === 0);
-    } else {
-        // children attached to the root
-        return cursor;
-    }
+    var children = cursor.vdom[cursor.currentIdx - 1].children;
+    return new VDomCursor(cursor.renderer, children, cursor, children.length === 0);
 }
 
 function childrenEnd(cursor) {
