@@ -1,9 +1,11 @@
-function VDomCursor(renderer, vdom, parentCursor, creationMode) {
+function VDomCursor(renderer, vdom, parentCursor, creationMode, appendMode, nativeParentEl) {
     this.renderer = renderer;
     this.vdom = vdom || [];
     this.currentIdx = 0;
     this.parentCursor = parentCursor;
     this.creationMode = creationMode || false;
+    this.appendMode = appendMode;
+    this.nativeParentEl = nativeParentEl;
 }
 
 function VDomNode(id, nativeEl, type, value, props) {
@@ -57,17 +59,11 @@ function registerEventHandlers(renderer, nativeEl, eventHandlers) {
 }
 
 function appendNativeEl(cursor, nativeEl) {
-    if (cursor.parentCursor) {
-        var parentEl = cursor.parentCursor.vdom[cursor.parentCursor.currentIdx -1];
-        if (parentEl.type === '#view') {
-            cursor.renderer.insertBefore(parentEl.nativeEl, nativeEl);
-        } else {
-            cursor.renderer.appendChild(parentEl.nativeEl, nativeEl);
-        }
+    if (cursor.appendMode) {
+        cursor.renderer.appendChild(cursor.nativeParentEl, nativeEl);
     } else {
-        cursor.renderer.appendChildToRoot(nativeEl);
+        cursor.renderer.insertBefore(cursor.nativeParentEl, nativeEl);
     }
-
     return nativeEl;
 }
 
@@ -207,8 +203,14 @@ function elementStart(cursor, elId, tagName, staticProps, props, eventHandlers) 
 }
 
 function childrenStart(cursor) {
-    var children = cursor.vdom[cursor.currentIdx - 1].children;
-    return new VDomCursor(cursor.renderer, children, cursor, children.length === 0);
+    var containerEl = cursor.vdom[cursor.currentIdx - 1];
+    return new VDomCursor(
+      cursor.renderer,
+      containerEl.children,
+      cursor, containerEl.children.length === 0,
+      containerEl.type !== '#view',
+      containerEl.nativeEl
+    );
 }
 
 function childrenEnd(cursor) {
