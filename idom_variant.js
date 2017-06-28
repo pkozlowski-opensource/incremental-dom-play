@@ -8,11 +8,11 @@ function VDomCursor(renderer, vdom, currentIdx, parentCursor, creationMode) {
 
 function VDomNode(id, nativeEl, type, value, props) {
     this.id = id;
-    this.nativeEl = nativeEl;
     this.type = type;
     this.value = value;
     this.props = props;
     this.children = [];
+    this.nativeEl = nativeEl;
 }
 
 function advanceTo(vdom, startIdx, id) {
@@ -102,13 +102,14 @@ function updateNode(renderer, node, value, props) {
     if (props) {
         var propNames = Object.keys(props);
         var len = propNames.length;
-        var propKey;
+        var propKey, propValue;
 
         for (var i=0; i<len; i++) {
             propKey = propNames[i];
-            if (node.props[propKey] !== props[propKey]) {
-                node.props[propKey] = props[propKey];
-                renderer.setProperty(node.nativeEl, propKey, props[propKey])
+            propValue = props[propKey];
+            if (node.props[propKey] !== propValue) {
+                node.props[propKey] = propValue;
+                renderer.setProperty(node.nativeEl, propKey, propValue)
             }
         }
     }
@@ -150,7 +151,7 @@ function text(cursor, elId, value) {
 
       return cursor;
     } else {
-      return createOrUpdateNode(cursor, elId, '#text', createNativeText, value, null, null);
+      return createOrUpdateNode(cursor, elId, '#text', createNativeText, value, undefined, undefined);
     }
 }
 
@@ -174,7 +175,7 @@ function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
 
       return cursor;
     } else {
-      return createOrUpdateNode(cursor, elId, tagName, createNativeElement, null, staticProps, props, eventHandlers);
+      return createOrUpdateNode(cursor, elId, tagName, createNativeElement, undefined, staticProps, props, eventHandlers);
     }
 }
 

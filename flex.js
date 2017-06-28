@@ -103,7 +103,7 @@ function fare(cursor, data) {
         classes +=' fare-selected';
     }
 
-    cursor = elementStart(cursor, 0, 'div', null, {
+    cursor = elementStart(cursor, 0, 'div', undefined, {
           className: classes, //TODO: use class.foo instead
           'style.border-color': fareFamilly.color
       },
