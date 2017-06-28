@@ -38,10 +38,10 @@ function deleteNodes(renderer, vdom, currentIdx, count) {
 
 function setNativeProps(renderer, nativeEl, props) {
     var propNames = Object.keys(props);
-    var i = propNames.length;
+    var len = propNames.length;
     var propName;
 
-    while (i--) {
+    for (var i = 0; i < len; i++) {
         propName = propNames[i];
         renderer.setProperty(nativeEl, propName, props[propName]);
     }
@@ -49,9 +49,9 @@ function setNativeProps(renderer, nativeEl, props) {
 
 function registerEventHandlers(renderer, nativeEl, eventHandlers) {
     var events = Object.keys(eventHandlers);
-    var i = events.length;
+    var len = eventHandlers.length;
 
-    while (i--) {
+    for (var i = 0; i < len; i++) {
       renderer.addEventListener(nativeEl, events[i], eventHandlers[events[i]]);
     }
 }
@@ -141,7 +141,7 @@ function text(cursor, elId, value) {
       var nativeEl = cursor.renderer.createText(value);
       appendNativeEl(cursor, nativeEl);
 
-      cursor.vdom.push(new VDomNode(elId, nativeEl, "#text", value, undefined));
+      cursor.vdom[cursor.vdom.length] = new VDomNode(elId, nativeEl, "#text", value, undefined);
       cursor.currentIdx++;
 
       return cursor;
@@ -165,7 +165,7 @@ function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
       }
       appendNativeEl(cursor, nativeEl);
 
-      cursor.vdom.push(new VDomNode(elId, nativeEl, tagName, undefined, props));
+      cursor.vdom[cursor.vdom.length] = new VDomNode(elId, nativeEl, tagName, undefined, props);
       cursor.currentIdx++;
 
       return cursor;
@@ -179,7 +179,7 @@ function view(cursor, elId, viewFn, data) {
         var nativeEl = cursor.renderer.createComment('view');
        appendNativeEl(cursor, nativeEl);
 
-      cursor.vdom.push(new VDomNode(elId, nativeEl, "#view", undefined, undefined));
+      cursor.vdom[cursor.vdom.length] = new VDomNode(elId, nativeEl, "#view", undefined, undefined);
       cursor.currentIdx++;
     } else {
       cursor = createOrUpdateNode(cursor, elId, '#view', createNativeComment, undefined, undefined, undefined);

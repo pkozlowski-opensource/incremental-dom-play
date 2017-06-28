@@ -95,17 +95,16 @@ function fare(cursor, data) {
         return !fareFamilly.isMarginal && recommendation && recommendation.showLSA;
     }
 
-    var classes = ['fare'];
+    var classes = 'fare';
     if (fareFamilly.isMarginal) {
-        classes.push('fare-inactive');
+        classes +=' fare-inactive';
     }
     if (itinerary === selectedItinerary && selectedFare === fareFamilly.code) {
-        console.log('Selected');
-        classes.push('fare-selected');
+        classes +=' fare-selected';
     }
 
     cursor = elementStart(cursor, 0, 'div', null, {
-          className: classes.join(' '), //TODO: use class.foo instead
+          className: classes, //TODO: use class.foo instead
           'style.border-color': fareFamilly.color
       },
       {
