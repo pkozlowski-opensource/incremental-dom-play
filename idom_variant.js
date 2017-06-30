@@ -167,7 +167,7 @@ function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
     return cursor;
 }
 
-function createViewVDomNode(cursor, elId, viewFn, data) {
+function createViewVDomNode(cursor, elId) {
   var nativeEl = appendNativeEl(cursor, cursor.renderer.createComment('view'));
   return new VDomNode(elId, nativeEl, "#view", undefined, undefined);
 }
@@ -175,7 +175,7 @@ function createViewVDomNode(cursor, elId, viewFn, data) {
 function view(cursor, elId, viewFn, data) {
     if (cursor.creationMode) {
 
-      cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId, viewFn, data);
+      cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId);
 
     } else {
 
@@ -183,7 +183,7 @@ function view(cursor, elId, viewFn, data) {
 
       if (elementIdx === -1) {
         //not found at the expected position => create
-        cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, viewFn, data));
+        cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId));
       }
 
       //no update for views - for now!
