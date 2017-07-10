@@ -72,28 +72,23 @@ function flightSummary(cursor, segment) {
     return cursor;
 }
 
+function getRecommendation(itinerary, fareCode) {
+    return itinerary.flight.listRecommendation[fareCode];
+}
+
+function amountForFare(itinerary, fareCode) {
+    var recommendation = getRecommendation(itinerary, fareCode);
+    return recommendation ? '$' + Math.ceil(recommendation.amountForAll) : '';
+}
+
+function lastSeatsAvailable(itinerary, fareFamilly) {
+    const recommendation = getRecommendation(itinerary, fareFamilly.code);
+    return !fareFamilly.isMarginal && recommendation && recommendation.showLSA;
+}
+
 function fare(cursor, data) {
     var fareFamilly = data.fareFamilly;  //TODO: should be able to pass multiple arguments
     var itinerary = data.itinerary;
-
-    //TODO: measure cost of closures
-    function getRecommendation(fareCode) {
-        return itinerary.flight.listRecommendation[fareCode];
-    }
-
-    function hasRecommendation() {
-        return getRecommendation(fareFamilly.code) !== undefined;
-    }
-
-    function amountForFare() {
-        var recommendation = getRecommendation(fareFamilly.code);
-        return recommendation ? '$' + Math.ceil(recommendation.amountForAll) : '';
-    }
-
-    function lastSeatsAvailable(fareFamilly) {
-        const recommendation = getRecommendation(fareFamilly.code);
-        return !fareFamilly.isMarginal && recommendation && recommendation.showLSA;
-    }
 
     var classes = 'fare';
     if (fareFamilly.isMarginal) {
@@ -114,7 +109,7 @@ function fare(cursor, data) {
               refresh();
           }
       });
-    if (hasRecommendation()) {
+    if (getRecommendation(itinerary, fareFamilly.code)) {
 
         // JQ icon
         if (itinerary.isJQOnlyFlight && !fareFamilly.isMarginal) {
@@ -130,7 +125,7 @@ function fare(cursor, data) {
             if (fareFamilly.isMarginal) {
                 cursor = element(cursor, 0, 'img', {src: "assets/award.svg", width:"24", height:"24"});
             } else {
-                cursor = text(cursor, 1, amountForFare());
+                cursor = text(cursor, 1, amountForFare(itinerary, fareFamilly.code));
             }
             cursor = elementEnd(cursor);
 
@@ -144,7 +139,7 @@ function fare(cursor, data) {
         cursor = elementEnd(cursor);
     }
 
-    if (lastSeatsAvailable(fareFamilly)) {
+    if (lastSeatsAvailable(itinerary, fareFamilly)) {
         cursor =  elWithText(cursor, 4, 'div', '5 or fewer seats', 'last-seats');
     }
 
@@ -163,17 +158,22 @@ function fareDetails(cursor, data) {
 }
 
 function itineraryAvail(cursor, data) {
-    var operatedSegments =  data.itinerary.segments.filter(function(segment) {
-     return segment.isOperated;
-    });
+    var operatedSegments =  [];
+    var segments = data.itinerary.segments;
+
+    for (var i=0; i < segments.length; i++) {
+        if (segments[i].isOperated) {
+            operatedSegments.push(segments[i]);
+        }
+    }
 
     cursor = elementStart(cursor, 0, 'div', {className: 'itinerary'});
 
         cursor = elementStart(cursor, 0, 'div', {className: 'itinerary-header'});
             cursor = elementStart(cursor, 0, 'div', {className: 'itinerary-info right-delimiter'});
 
-                for (var i=0; i< data.itinerary.segments.length; i++) {
-                    var segment =  data.itinerary.segments[i];
+                for (var i=0; i< segments.length; i++) {
+                    var segment = segments[i];
                     cursor = view(cursor, 0, flightSummary, segment);
                 }
 
