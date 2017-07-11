@@ -65,7 +65,7 @@ function appendNativeEl(cursor, nativeEl) {
             cursor.renderer.appendChild(parentEl.nativeEl, nativeEl);
         }
     } else {
-        cursor.renderer.appendChildToRoot(nativeEl);
+        cursor.renderer.appendChild(cursor.renderer.getRoot(), nativeEl);
     }
 
     return nativeEl;
@@ -237,12 +237,3 @@ function patch(cursor, cmptFn, data) {
 
     return cursor;
 }
-
-//TODO(IMPL):
-// - refactor code around root node
-// - tests for renderer interactions (remaining: event handlers, views)
-// - need better asserts on VDOM so writing tests is easier
-// - loops with a group of sibiling elements => loops need a view... => ng-content?
-// - loops with stable sorting (keyed sorting)
-// - map props (class, style, ...)
-// - attrs - should be as simple as prefixing props with attr. => BTW, why Angular is making it so complex? Speed?

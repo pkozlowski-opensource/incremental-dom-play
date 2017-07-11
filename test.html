@@ -32,7 +32,7 @@
         NoopRenderer.prototype.appendChild = function appendChild(parentNode, childNode) {
         };
 
-        NoopRenderer.prototype.appendChildToRoot = function appendChildToRoot(childNode) {
+        NoopRenderer.prototype.getRoot = function getRoot() {
         };
 
         NoopRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
@@ -101,11 +101,11 @@
             this.instructions.push(`APPEND ${parentNode} -> ${childNode}`);
         };
 
-        LoggingRenderer.prototype.appendChildToRoot = function appendChildToRoot(childNode) {
-            this.appendChild(this.root, childNode);
+        LoggingRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
         };
 
-        LoggingRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
+        LoggingRenderer.prototype.getRoot = function getRoot() {
+            return this.root;
         };
 
         LoggingRenderer.prototype.removeNode = function removeNode(node) {
@@ -415,6 +415,25 @@
                     expect(cursor.vdom[0].type).toBe('div');
                     expect(cursor.vdom[0].children.length).toBe(1);
                     expect(cursor.vdom[0].children[0].type).toBe('span');
+                });
+            });
+
+            describe('views', function() {
+
+                it('should allow views attached to root', function() {
+                    function textView(cursor) {
+                        return text(cursor, 0, 'from view');
+                    }
+
+                    function app(cursor) {
+                        return view(cursor, 0, textView);
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('#view');
+                    expect(cursor.vdom[0].children.length).toBe(1);
+                    expect(cursor.vdom[0].children[0].type).toBe('#text');
                 });
             });
         });

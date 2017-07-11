@@ -6,7 +6,12 @@ ALGORITHM
 
 IMPL
 -----------------------------------
--
+- tests for renderer interactions (remaining: event handlers, views)
+- need better asserts on VDOM so writing tests is easier
+- loops with a group of sibiling elements => loops need a view... => ng-content?
+- loops with stable sorting (keyed sorting)
+- map props (class, style, ...)
+- attrs - should be as simple as prefixing props with attr. => BTW, why Angular is making it so complex? Speed?
 
 PERF (ideas to test)
 -----------------------------------

@@ -23,8 +23,8 @@ DOMRenderer.prototype.appendChild = function appendChild(parentNode, childNode) 
     parentNode.appendChild(childNode);
 };
 
-DOMRenderer.prototype.appendChildToRoot = function appendChild(childNode) {
-    this.appendChild(this.rootEl, childNode);
+DOMRenderer.prototype.getRoot = function getRoot() {
+    return this.rootEl;
 };
 
 DOMRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
