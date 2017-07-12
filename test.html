@@ -235,6 +235,30 @@
                     expect(cursor.vdom[0].type).toBe('span');
                 });
 
+                it('should create elements with sibling container elements', function() {
+                    function app(c) {
+                        c = elementStart(c, 0, 'div');
+                            c = elementStart(c, 0, 'h4');
+                                c = text(c, 0, 'foo');
+                            c = elementEnd(c);
+                            c = elementStart(c, 0, 'h4');
+                                c = text(c, 0, 'bar');
+                            c = elementEnd(c);
+                        c = elementEnd(c);
+
+                        return c;
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('div');
+
+                    var divChildren = cursor.vdom[0].children;
+                    expect(divChildren.length).toBe(2);
+                    expect(divChildren[0].type).toBe('h4');
+                    expect(divChildren[1].type).toBe('h4');
+                });
+
                 it('should create and update multiple elements from a function', function () {
                     function subComponent(cursor) {
                         cursor = element(cursor, 0, 'span', null, null);
