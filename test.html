@@ -76,6 +76,10 @@
         };
 
         LoggingRenderer.prototype.createComment = function createComment(value) {
+            var node = new MockNode(this.uid++, '#comment', value);
+            this.instructions.push(`CREATE ${node.toFullString()}`);
+
+            return node;
         };
 
         LoggingRenderer.prototype.createElement = function createElement(tagName) {
@@ -102,6 +106,7 @@
         };
 
         LoggingRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
+            this.instructions.push(`INSERT ${newNode} before ${refNode}`);
         };
 
         LoggingRenderer.prototype.getRoot = function getRoot() {
@@ -670,6 +675,71 @@
                        'DELETE span 2',
                    ].join('\n'));
                })
+            });
+
+            describe('views', function() {
+               function simpleView(c) {
+                   return text(c, 0, 'foo');
+               }
+
+               it('should append view nodes to root in the creation mode', function() {
+                   function app(c) {
+                       return view(c, 0, simpleView);
+                   }
+
+                   patch(new VDomCursor(loggingRenderer), app, true);
+
+                   expect(loggingRenderer.instructions.join('\n')).toEqual([
+                       'CREATE #text 1 foo',
+                       'APPEND #root 0 -> #text 1',
+                   ].join('\n'));
+               });
+
+                it('should append view nodes to container element in the creation mode', function() {
+                    function app(c) {
+                        c = elementStart(c, 0, 'div');
+                        c = view(c, 0, simpleView);
+                        c = elementEnd(c);
+
+                        return c;
+                    }
+
+                    patch(new VDomCursor(loggingRenderer), app, true);
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE div 1',
+                        'APPEND #root 0 -> div 1',
+                        'CREATE #text 2 foo',
+                        'APPEND div 1 -> #text 2'
+                    ].join('\n'));
+                });
+
+
+                it('should append view nodes to container element in the update mode if view elements are at the end of view', function() {
+                    function twoElsView(c, addLast) {
+                        c = text(c, 0, 'before');
+                        if (addLast) {
+                            c = text(c, 1, 'after');
+                        }
+
+                        return c;
+                    }
+
+                    function app(c, addLast) {
+                        return view(c, 0, twoElsView, addLast);
+                    }
+
+                    var c = patch(new VDomCursor(loggingRenderer), app, false);
+                    loggingRenderer.clearInstructions();
+
+                    patch(c, app, true);
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE #text 2 after',
+                        'APPEND #root 0 -> #text 2'
+                    ].join('\n'));
+                });
+
             });
         });
     </script>

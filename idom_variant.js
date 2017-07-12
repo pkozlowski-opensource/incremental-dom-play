@@ -56,11 +56,47 @@ function registerEventHandlers(renderer, nativeEl, eventHandlers) {
     }
 }
 
+function findParentNativeEl(cursor) {
+    if (cursor.parentCursor) {
+        var parentCursor = cursor.parentCursor;
+        var parentEl = parentCursor.vdom[parentCursor.currentIdx -1];
+        if (parentEl.type === '#view') {
+            return findParentNativeEl(parentCursor);
+        } else {
+            return parentEl.nativeEl;
+        }
+
+    } else {
+        return cursor.renderer.getRoot();
+    }
+}
+
+function findSibilingNativeEl(cursor) {
+    for (var i = cursor.currentIdx; i<cursor.vdom.length; i++) {
+        if (cursor.vdom[i].type !== '#view') {
+            return cursor.vdom[i].nativeEl;
+        }
+    }
+
+    return null;
+}
+
 function appendNativeEl(cursor, nativeEl) {
     if (cursor.parentCursor) {
         var parentEl = cursor.parentCursor.vdom[cursor.parentCursor.currentIdx -1];
         if (parentEl.type === '#view') {
-            cursor.renderer.insertBefore(parentEl.nativeEl, nativeEl);
+            var parentNativeEl = findParentNativeEl(cursor);
+            if (cursor.creationMode) {
+                cursor.renderer.appendChild(parentNativeEl, nativeEl);
+            } else {
+                var sibilingEl = findSibilingNativeEl(cursor);
+                // In the update mode but adding elements at the end so
+                if (sibilingEl) {
+                    cursor.renderer.insertBefore(sibilingEl, nativeEl);
+                } else {
+                    cursor.renderer.appendChild(parentNativeEl, nativeEl);
+                }
+            }
         } else {
             cursor.renderer.appendChild(parentEl.nativeEl, nativeEl);
         }
@@ -168,8 +204,8 @@ function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
 }
 
 function createViewVDomNode(cursor, elId) {
-  var nativeEl = appendNativeEl(cursor, cursor.renderer.createComment('view'));
-  return new VDomNode(elId, nativeEl, "#view", undefined, undefined);
+  //var nativeEl = appendNativeEl(cursor, cursor.renderer.createComment('view'));
+  return new VDomNode(elId, undefined, "#view", undefined, undefined);
 }
 
 function view(cursor, elId, viewFn, data) {
