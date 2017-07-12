@@ -58,18 +58,18 @@ function registerEventHandlers(renderer, nativeEl, eventHandlers) {
 }
 
 function findParentNativeEl(cursor) {
-    if (cursor.parentCursor) {
-        var parentCursor = cursor.parentCursor;
-        var parentEl = parentCursor.vdom[parentCursor.currentIdx -1];
+    var parentCursor;
+
+    while (parentCursor = cursor.parentCursor) {
+      var parentEl = parentCursor.vdom[parentCursor.currentIdx -1];
         if (parentEl.type === '#view') {
-            return findParentNativeEl(parentCursor);
+            cursor = parentCursor;
         } else {
             return parentEl.nativeEl;
         }
-
-    } else {
-        return cursor.renderer.getRoot();
     }
+
+    return cursor.renderer.getRoot();
 }
 
 function findSibilingNativeEl(cursor) {
