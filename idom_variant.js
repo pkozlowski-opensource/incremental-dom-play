@@ -4,6 +4,7 @@ function VDomCursor(renderer, vdom, parentCursor, creationMode) {
     this.currentIdx = 0;
     this.parentCursor = parentCursor;
     this.creationMode = creationMode || false;
+    this.parentNativeEl = findParentNativeEl(this);
 }
 
 function VDomNode(id, nativeEl, type, value, props) {
@@ -82,28 +83,22 @@ function findSibilingNativeEl(cursor) {
 }
 
 function appendNativeEl(cursor, nativeEl) {
-    if (cursor.parentCursor) {
-        var parentEl = cursor.parentCursor.vdom[cursor.parentCursor.currentIdx -1];
-        if (parentEl.type === '#view') {
-            var parentNativeEl = findParentNativeEl(cursor);
-            if (cursor.creationMode) {
-                cursor.renderer.appendChild(parentNativeEl, nativeEl);
-            } else {
-                var sibilingEl = findSibilingNativeEl(cursor);
-                // In the update mode but adding elements at the end so
-                if (sibilingEl) {
-                    cursor.renderer.insertBefore(sibilingEl, nativeEl);
-                } else {
-                    cursor.renderer.appendChild(parentNativeEl, nativeEl);
-                }
-            }
-        } else {
-            cursor.renderer.appendChild(parentEl.nativeEl, nativeEl);
-        }
+    if (cursor.creationMode || !cursor.parentCursor) {
+      cursor.renderer.appendChild(cursor.parentNativeEl, nativeEl);
     } else {
-        cursor.renderer.appendChild(cursor.renderer.getRoot(), nativeEl);
+      var parentEl = cursor.parentCursor.vdom[cursor.parentCursor.currentIdx -1];
+      if (parentEl.type === '#view') {
+        var sibilingEl = findSibilingNativeEl(cursor);
+        if (sibilingEl) {
+            cursor.renderer.insertBefore(cursor.parentNativeEl, sibilingEl, nativeEl);
+        } else {
+            cursor.renderer.appendChild(cursor.parentNativeEl, nativeEl);
+        }
+      } else {
+        cursor.renderer.appendChild(cursor.parentNativeEl, nativeEl);
+      }
     }
-
+  
     return nativeEl;
 }
 
@@ -204,7 +199,6 @@ function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
 }
 
 function createViewVDomNode(cursor, elId) {
-  //var nativeEl = appendNativeEl(cursor, cursor.renderer.createComment('view'));
   return new VDomNode(elId, undefined, "#view", undefined, undefined);
 }
 
@@ -264,6 +258,7 @@ var elementEnd = childrenEnd;
 
 function patch(cursor, cmptFn, data) {
     cursor.currentIdx = 0;
+    cursor.parentNativeEl = cursor.renderer.getRoot();
 
     cursor = cmptFn(cursor, data);
 

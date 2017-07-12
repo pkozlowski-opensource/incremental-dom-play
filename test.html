@@ -35,7 +35,7 @@
         NoopRenderer.prototype.getRoot = function getRoot() {
         };
 
-        NoopRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
+        NoopRenderer.prototype.insertBefore = function insertBefore(parentNode, refNode, newNode) {
         };
 
         NoopRenderer.prototype.removeNode = function removeNode(node) {
@@ -105,8 +105,8 @@
             this.instructions.push(`APPEND ${parentNode} -> ${childNode}`);
         };
 
-        LoggingRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
-            this.instructions.push(`INSERT ${newNode} before ${refNode}`);
+        LoggingRenderer.prototype.insertBefore = function insertBefore(parentNode, refNode, newNode) {
+            this.instructions.push(`INSERT ${parentNode} -> ${newNode} before ${refNode}`);
         };
 
         LoggingRenderer.prototype.getRoot = function getRoot() {
@@ -715,7 +715,7 @@
                 });
 
 
-                it('should append view nodes to container element in the update mode if view elements are at the end of view', function() {
+                it('should append view nodes to container element in the update mode and view elements are at the end of view', function() {
                     function twoElsView(c, addLast) {
                         c = text(c, 0, 'before');
                         if (addLast) {
@@ -737,6 +737,31 @@
                     expect(loggingRenderer.instructions.join('\n')).toEqual([
                         'CREATE #text 2 after',
                         'APPEND #root 0 -> #text 2'
+                    ].join('\n'));
+                });
+
+                it('should insert view nodes to container element in the update mode and view elements are not at the end of view', function() {
+                    function twoElsView(c, addFirst) {
+                        if (addFirst) {
+                           c = text(c, 0, 'before');
+                        }
+                        c = text(c, 1, 'after');
+
+                        return c;
+                    }
+
+                    function app(c, addFirst) {
+                        return view(c, 0, twoElsView, addFirst);
+                    }
+
+                    var c = patch(new VDomCursor(loggingRenderer), app, false);
+                    loggingRenderer.clearInstructions();
+
+                    patch(c, app, true);
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE #text 2 before',
+                        'INSERT #root 0 -> #text 2 before #text 1'
                     ].join('\n'));
                 });
 

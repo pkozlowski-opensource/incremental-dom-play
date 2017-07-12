@@ -1,12 +1,11 @@
 ALGORITHM
 -----------------------------------
-- better understand on how I can take advantage of the creation mode knowledge
 - what happens with sibiling nodes?
 - how would I go about the "refresh" functionality?
 
 IMPL
 -----------------------------------
-- tests for renderer interactions (remaining: event handlers, views)
+- tests for renderer interactions (remaining: event handlers)
 - need better asserts on VDOM so writing tests is easier
 - loops with a group of sibiling elements => loops need a view... => ng-content?
 - loops with stable sorting (keyed sorting)
@@ -15,7 +14,6 @@ IMPL
 
 PERF (ideas to test)
 -----------------------------------
-- pass a create / update function to the createOrUpdateNode (this will eliminate if / else on type)
 - change generated code signature so I'm passing around objects ready to insert into VDOM
 - use byte-masking for type instead of strings (will result in an additional field in VDOM)
 - have different VDOM node types to save memory (this will make those polymorphic, although still a limited set)

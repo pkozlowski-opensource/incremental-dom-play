@@ -27,9 +27,8 @@ DOMRenderer.prototype.getRoot = function getRoot() {
     return this.rootEl;
 };
 
-DOMRenderer.prototype.insertBefore = function insertBefore(refNode, newNode) {
-    // I could look it up in the VDOM if needed
-    refNode.parentNode.insertBefore(newNode, refNode);
+DOMRenderer.prototype.insertBefore = function insertBefore(parentNode, refNode, newNode) {
+    parentNode.insertBefore(newNode, refNode);
 };
 
 DOMRenderer.prototype.removeNode = function removeNode(node) {
