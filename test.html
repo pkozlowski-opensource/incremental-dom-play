@@ -368,12 +368,12 @@
                     var cursor = patch(new VDomCursor(noopRenderer), dynamicPropsApp, {id: 'some_id'});
                     expect(cursor.vdom.length).toBe(1);
                     expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].data.props.id).toBe('some_id');
+                    expect(cursor.vdom[0].props.id).toBe('some_id');
 
                     cursor = patch(cursor, dynamicPropsApp, {id: 'some_other_id'});
                     expect(cursor.vdom.length).toBe(1);
                     expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].data.props.id).toBe('some_other_id');
+                    expect(cursor.vdom[0].props.id).toBe('some_other_id');
                 });
             });
 
