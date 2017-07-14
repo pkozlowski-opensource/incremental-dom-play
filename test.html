@@ -17,9 +17,6 @@
 
         function NoopRenderer() {}
 
-        NoopRenderer.prototype.createComment = function createComment(value) {
-        };
-
         NoopRenderer.prototype.createElement = function createElement(value) {
         };
 
@@ -73,13 +70,6 @@
 
         LoggingRenderer.prototype.clearInstructions = function clear() {
             this.instructions = [];
-        };
-
-        LoggingRenderer.prototype.createComment = function createComment(value) {
-            var node = new MockNode(this.uid++, '#comment', value);
-            this.instructions.push(`CREATE ${node.toFullString()}`);
-
-            return node;
         };
 
         LoggingRenderer.prototype.createElement = function createElement(tagName) {

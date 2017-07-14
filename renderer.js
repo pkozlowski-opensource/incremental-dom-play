@@ -3,10 +3,6 @@ function DOMRenderer(document, rootEl) {
     this.rootEl = rootEl;
 }
 
-DOMRenderer.prototype.createComment = function createComment(data) {
-    return this.document.createComment(data);
-};
-
 DOMRenderer.prototype.createElement = function createElement(tagName) {
     return this.document.createElement(tagName);
 };
