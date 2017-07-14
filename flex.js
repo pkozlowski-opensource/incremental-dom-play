@@ -34,24 +34,23 @@ function fareFamilyHeader(cursor, fareFamilies) {
     return cursor;
 }
 
+function flightDeparture(cursor, idx, city, date) {
+    cursor = elementStart(cursor, idx, 'h3', {className: 'flight-departure'});
+        cursor = elementStart(cursor, 0, 'span');
+            cursor = text(cursor, 0, city);
+        cursor = elementEnd(cursor);
+        cursor = text(cursor, 1, date);
+    cursor = elementEnd(cursor);
+
+    return cursor;
+}
+
 function flightSummary(cursor, segment) {
     cursor = elementStart(cursor, 0, 'div', {className: 'flight-summary'});
 
         cursor = elementStart(cursor, 0, 'header');
-            cursor = elementStart(cursor, 0, 'h3', {className: 'flight-departure'});
-                cursor = elementStart(cursor, 0, 'span');
-                    cursor = text(cursor, 0, segment.beginLocation.cityName);
-                cursor = elementEnd(cursor);
-                cursor = text(cursor, 1, segment.beginDate);
-            cursor = elementEnd(cursor);
-
-            cursor = elementStart(cursor, 0, 'h3', {className: 'flight-departure'});
-                cursor = elementStart(cursor, 0, 'span');
-                    cursor = text(cursor, 0, segment.endLocation.cityName);
-                cursor = elementEnd(cursor);
-                cursor = text(cursor, 1, segment.endDate);
-            cursor = elementEnd(cursor);
-
+            cursor = flightDeparture(cursor, 0, segment.beginLocation.cityName, segment.beginDate);
+            cursor = flightDeparture(cursor, 1, segment.endLocation.cityName, segment.endDate);
         cursor = elementEnd(cursor);
 
         cursor = elementStart(cursor, 1, 'footer');
