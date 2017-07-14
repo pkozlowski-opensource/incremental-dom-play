@@ -36,7 +36,7 @@ DOMRenderer.prototype.removeNode = function removeNode(node) {
 
 DOMRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
     if (propName.charCodeAt(5) === 46) {
-        node.style[propName.slice(6)] = propValue;
+        node.style[propName.substr(6)] = propValue;
     } else {
         node[propName] = propValue;
     }
