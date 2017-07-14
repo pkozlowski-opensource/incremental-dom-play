@@ -35,7 +35,7 @@
         NoopRenderer.prototype.insertBefore = function insertBefore(parentNode, refNode, newNode) {
         };
 
-        NoopRenderer.prototype.removeNode = function removeNode(node) {
+        NoopRenderer.prototype.removeNode = function removeNode(parentNode, node) {
         };
 
         NoopRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
@@ -103,8 +103,8 @@
             return this.root;
         };
 
-        LoggingRenderer.prototype.removeNode = function removeNode(node) {
-            this.instructions.push(`DELETE ${node}`);
+        LoggingRenderer.prototype.removeNode = function removeNode(parentNode, node) {
+            this.instructions.push(`DELETE ${parentNode} -> ${node}`);
         };
 
         LoggingRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
@@ -368,23 +368,12 @@
                     var cursor = patch(new VDomCursor(noopRenderer), dynamicPropsApp, {id: 'some_id'});
                     expect(cursor.vdom.length).toBe(1);
                     expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].props.id).toBe('some_id');
+                    expect(cursor.vdom[0].data.props.id).toBe('some_id');
 
                     cursor = patch(cursor, dynamicPropsApp, {id: 'some_other_id'});
                     expect(cursor.vdom.length).toBe(1);
                     expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].props.id).toBe('some_other_id');
-                });
-
-                it('should support creation of elements with static and dynamic properties containing dots', function() {
-                    function staticAndDynamicPropsApp(cursor) {
-                        return element(cursor, 0, 'div', null, {'class.foo': true});
-                    }
-
-                    var cursor = patch(new VDomCursor(noopRenderer), staticAndDynamicPropsApp, null);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].props['class.foo']).toBe(true);
+                    expect(cursor.vdom[0].data.props.id).toBe('some_other_id');
                 });
             });
 
@@ -514,7 +503,7 @@
                     expect(loggingRenderer.instructions.join('\n')).toEqual([
                         'CREATE #text 1 here!',
                         'APPEND #root 0 -> #text 1',
-                        'DELETE #text 1'
+                        'DELETE #root 0 -> #text 1'
                     ].join('\n'));
                 });
 
@@ -538,7 +527,7 @@
                         'APPEND #root 0 -> #text 2',
                         'CREATE #text 3 after',
                         'APPEND #root 0 -> #text 3',
-                        'DELETE #text 2'
+                        'DELETE #root 0 -> #text 2'
                     ].join('\n'));
                 });
 
@@ -559,7 +548,7 @@
                         'APPEND #root 0 -> #text 1',
                         'CREATE #text 2 here!',
                         'APPEND #root 0 -> #text 2',
-                        'DELETE #text 2'
+                        'DELETE #root 0 -> #text 2'
                     ].join('\n'));
                 });
 
@@ -662,7 +651,7 @@
                    loggingRenderer.clearInstructions();
                    cursor = patch(cursor, removeChildApp, false);
                    expect(loggingRenderer.instructions.join('\n')).toEqual([
-                       'DELETE span 2',
+                       'DELETE div 1 -> span 2',
                    ].join('\n'));
                })
             });
