@@ -27,11 +27,8 @@ DOMRenderer.prototype.insertBefore = function insertBefore(parentNode, refNode, 
     parentNode.insertBefore(newNode, refNode);
 };
 
-DOMRenderer.prototype.removeNode = function removeNode(node) {
-    var parentNode = node.parentNode;
-    if (parentNode) {
-        parentNode.removeChild(node);
-    }
+DOMRenderer.prototype.removeNode = function removeNode(parentNode, node) {
+    parentNode.removeChild(node);
 };
 
 DOMRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {

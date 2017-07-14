@@ -20,7 +20,6 @@ PERF (ideas to test)
 - cache cursors
 - attribute / property / class / style split: [attr.foo]="exp", [class.foo]="exp", [style.foo]="exp", [foo]="exp"
 - create different methods for elements (with / without properties etc.) => there would be many combinations!
-- check if removing children with a known parent is any faster
 - track memory usage - list places where memory gets allocated
 - skip parts of the tree optimizations
 - I could probably be skipping many comparison when I know that there are no bindings

@@ -25,15 +25,18 @@ function advanceTo(vdom, startIdx, id) {
     return -1;
 }
 
-function deleteNodes(renderer, vdom, currentIdx, count) {
+function deleteNodes(renderer, parentNativeEl, vdom, currentIdx, count) {
     var deletedEls = vdom.splice(currentIdx, count); // potential GC on subsequent executions
+    var len = deletedEls.length;
     var elToDelete;
-    for (var i=0; i< deletedEls.length; i++) {
-        elToDelete = deletedEls[i];
+
+    while (len--) {
+        elToDelete = deletedEls[len];
+
         if (elToDelete.type === '#view') {
-            deleteNodes(renderer, elToDelete.children, 0, elToDelete.children.length);
+          deleteNodes(renderer, parentNativeEl, elToDelete.children, 0, elToDelete.children.length);
         }
-        renderer.removeNode(deletedEls[i].nativeEl);
+        renderer.removeNode(parentNativeEl, elToDelete.nativeEl);
     }
 }
 
@@ -131,7 +134,7 @@ function text(cursor, elId, value) {
       }
 
       if (elementIdx > cursor.currentIdx) {
-          deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
+          deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
       }
     }
 
@@ -189,7 +192,7 @@ function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
       }
 
       if (elementIdx > cursor.currentIdx) {
-          deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
+          deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
       }
 
     }
@@ -222,7 +225,7 @@ function view(cursor, elId, viewFn, data) {
       //- allow swapping viewFn
 
       if (elementIdx > cursor.currentIdx) {
-          deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
+          deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
       }
     }
 
@@ -245,7 +248,7 @@ function childrenEnd(cursor) {
     var parentCursor = cursor.parentCursor;
 
     if (cursor.vdom.length > cursor.currentIdx) {
-        deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, cursor.vdom.length - cursor.currentIdx);
+        deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, cursor.vdom.length - cursor.currentIdx);
     }
 
     cursor.parentCursor = undefined;
@@ -263,7 +266,7 @@ function patch(cursor, cmptFn, data) {
     cursor = cmptFn(cursor, data);
 
     if (cursor.vdom.length > cursor.currentIdx) {
-        deleteNodes(cursor.renderer, cursor.vdom, cursor.currentIdx, cursor.vdom.length - cursor.currentIdx);
+        deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, cursor.vdom.length - cursor.currentIdx);
     }
 
     return cursor;
