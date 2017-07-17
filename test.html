@@ -38,6 +38,9 @@
         NoopRenderer.prototype.removeNode = function removeNode(parentNode, node) {
         };
 
+        NoopRenderer.prototype.setAttribute = function setAttribute(node, attrName, attrValue) {
+        };
+
         NoopRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
         };
 
@@ -110,6 +113,10 @@
         LoggingRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
             node[propName] = propValue;
             this.instructions.push(`SET ${node} ${propName}=${propValue}`);
+        };
+
+        LoggingRenderer.prototype.setAttribute = function setAttribute(node, attrName, attrValue) {
+            this.instructions.push(`SET_ATTR ${node} ${attrName}=${attrValue}`);
         };
 
         LoggingRenderer.prototype.addEventListener = function addEventListener(node, eventName, listenerFn) {
@@ -585,24 +592,24 @@
                     return element(cursor, 0, 'img', {src: 'image.png'});
                 }
 
-                it('should create elements, set properties and attach to the root', function() {
+                it('should create elements, set attributes and attach to the root', function() {
                     patch(new VDomCursor(loggingRenderer), imgApp, 'foo');
 
                     expect(loggingRenderer.instructions.join('\n')).toEqual([
                         'CREATE img 1',
-                        'SET img 1 src=image.png',
+                        'SET_ATTR img 1 src=image.png',
                         'APPEND #root 0 -> img 1'
                     ].join('\n'));
                 });
 
-                it('should do noting on update when only static props are present', function() {
+                it('should do noting on update when only attributes are present', function() {
                     var cursor = patch(new VDomCursor(loggingRenderer), imgApp);
                     cursor = patch(cursor, imgApp);
                     cursor = patch(cursor, imgApp);
 
                     expect(loggingRenderer.instructions.join('\n')).toEqual([
                         'CREATE img 1',
-                        'SET img 1 src=image.png',
+                        'SET_ATTR img 1 src=image.png',
                         'APPEND #root 0 -> img 1'
                     ].join('\n'));
                 });
@@ -617,7 +624,7 @@
 
                     expect(loggingRenderer.instructions.join('\n')).toEqual([
                         'CREATE img 1',
-                        'SET img 1 src=image.png',
+                        'SET_ATTR img 1 src=image.png',
                         'SET img 1 width=10',
                         'SET img 1 height=10',
                         'APPEND #root 0 -> img 1',

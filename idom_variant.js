@@ -40,6 +40,17 @@ function deleteNodes(renderer, parentNativeEl, vdom, currentIdx, count) {
     }
 }
 
+function setNativeAttrs(renderer, nativeEl, attrs) {
+    var attrNames = Object.keys(attrs);
+    var len = attrNames.length;
+    var attrName;
+
+    for (var i = 0; i < len; i++) {
+        attrName = attrNames[i];
+        renderer.setAttribute(nativeEl, attrName, attrs[attrName]);
+    }
+}
+
 function setNativeProps(renderer, nativeEl, props) {
     var propNames = Object.keys(props);
     var len = propNames.length;
@@ -143,21 +154,21 @@ function text(cursor, elId, value) {
     return cursor;
 }
 
-function createElementVNode(cursor, elId, tagName, staticProps, props, eventHandlers) {
+function createElementVNode(cursor, elId, tagName, attrs, bindings, eventHandlers) {
   var nativeEl = cursor.renderer.createElement(tagName);
 
-  if (staticProps != null) {
-     setNativeProps(cursor.renderer, nativeEl, staticProps);
+  if (attrs != null) {
+     setNativeAttrs(cursor.renderer, nativeEl, attrs);
   }
-  if (props != null) {
-      setNativeProps(cursor.renderer, nativeEl, props);
+  if (bindings != null) {
+      setNativeProps(cursor.renderer, nativeEl, bindings);
   }
   if (eventHandlers != null) {
       registerEventHandlers(cursor.renderer, nativeEl, eventHandlers);
   }
   appendNativeEl(cursor, nativeEl);
 
-  return new VDomNode(elId, nativeEl, tagName, undefined, props);
+  return new VDomNode(elId, nativeEl, tagName, undefined, bindings);
 }
 
 function element(cursor, elId, tagName, staticProps, props, eventHandlers) {

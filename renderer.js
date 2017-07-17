@@ -31,12 +31,24 @@ DOMRenderer.prototype.removeNode = function removeNode(parentNode, node) {
     parentNode.removeChild(node);
 };
 
+DOMRenderer.prototype.setAttribute = function setAttribute(node, attrName, attrValue) {
+    node.setAttribute(attrName, attrValue);
+};
+
 DOMRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
-    if (propName.charCodeAt(5) === 46) {
-        node.style[propName.substr(6)] = propValue;
-    } else {
-        node[propName] = propValue;
-    }
+    node[propName] = propValue;
+};
+
+DOMRenderer.prototype.setStyle = function setStyle(node, styleName, styleValue) {
+    node.style[styleName] = styleValue;
+};
+
+DOMRenderer.prototype.addClass = function addClass(node, className) {
+    node.classList.add(className);
+};
+
+DOMRenderer.prototype.removeClass = function addClass(node, className) {
+    node.classList.remove(className);
 };
 
 DOMRenderer.prototype.addEventListener = function addEventListener(node, eventName, listenerFn) {

@@ -1,5 +1,5 @@
 function elWithText(cursor, idx, tagName, value, classes) {
-    cursor = elementStart(cursor, idx, tagName, {className: classes});
+    cursor = elementStart(cursor, idx, tagName, {'class': classes});
     cursor = text(cursor, 0, value);
     cursor = elementEnd(cursor);
 
@@ -9,9 +9,9 @@ function elWithText(cursor, idx, tagName, value, classes) {
 function fareFamilyHeader(cursor, fareFamilies) {
     var fareFamily;
 
-    cursor = elementStart(cursor, 0, 'div', {className: 'fare-families'});
+    cursor = elementStart(cursor, 0, 'div', {'class': 'fare-families'});
 
-        cursor = elementStart(cursor, 0, 'div', {className: 'fare-family-names'});
+        cursor = elementStart(cursor, 0, 'div', {'class': 'fare-family-names'});
         for (var i=0; i<fareFamilies.length; i++) {
             fareFamily = fareFamilies[i];
             cursor = elementStart(cursor, 0, 'h4');
@@ -20,7 +20,7 @@ function fareFamilyHeader(cursor, fareFamilies) {
         }
         cursor = elementEnd(cursor);
 
-        cursor = elementStart(cursor, 1, 'div', {className: 'fare-family-description'});
+        cursor = elementStart(cursor, 1, 'div', {'class': 'fare-family-description'});
         for (var i=0; i<fareFamilies.length; i++) {
             fareFamily = fareFamilies[i];
             cursor = elementStart(cursor, 0, 'div');
@@ -35,7 +35,7 @@ function fareFamilyHeader(cursor, fareFamilies) {
 }
 
 function flightDeparture(cursor, idx, city, date) {
-    cursor = elementStart(cursor, idx, 'h3', {className: 'flight-departure'});
+    cursor = elementStart(cursor, idx, 'h3', {'class': 'flight-departure'});
         cursor = elementStart(cursor, 0, 'span');
             cursor = text(cursor, 0, city);
         cursor = elementEnd(cursor);
@@ -46,7 +46,7 @@ function flightDeparture(cursor, idx, city, date) {
 }
 
 function flightSummary(cursor, segment) {
-    cursor = elementStart(cursor, 0, 'div', {className: 'flight-summary'});
+    cursor = elementStart(cursor, 0, 'div', {'class': 'flight-summary'});
 
         cursor = elementStart(cursor, 0, 'header');
             cursor = flightDeparture(cursor, 0, segment.beginLocation.cityName, segment.beginDate);
@@ -54,14 +54,14 @@ function flightSummary(cursor, segment) {
         cursor = elementEnd(cursor);
 
         cursor = elementStart(cursor, 1, 'footer');
-            cursor = elementStart(cursor, 0, 'div', {className: "flight-number as-link with-icon"});
-                cursor = element(cursor, 0, 'img', {className: 'icon', width: 14, height: 14, src: "assets/airlinesicons/" + segment.airline.code.toLowerCase() + ".png"});
+            cursor = elementStart(cursor, 0, 'div', {'class': "flight-number as-link with-icon"});
+                cursor = element(cursor, 0, 'img', {'class': 'icon', width: 14, height: 14, src: "assets/airlinesicons/" + segment.airline.code.toLowerCase() + ".png"});
                 cursor = text(cursor, 1, segment.airline.code.toUpperCase() + segment.flightNumber);
             cursor = elementEnd(cursor);
-            cursor = elementStart(cursor, 1, 'div', {className: "flight-stops as-link"});
+            cursor = elementStart(cursor, 1, 'div', {'class': "flight-stops as-link"});
                 cursor = text(cursor, 0, '0 stop(s)');
             cursor = elementEnd(cursor);
-            cursor = elementStart(cursor, 2, 'div', {className: "flight-duration"});
+            cursor = elementStart(cursor, 2, 'div', {'class': "flight-duration"});
                 cursor = text(cursor, 0, segment.duration);
             cursor = elementEnd(cursor);
         cursor = elementEnd(cursor);
@@ -98,7 +98,7 @@ function fare(cursor, data) {
     }
 
     cursor = elementStart(cursor, 0, 'div', undefined, {
-          className: classes, //TODO: use class.foo instead
+          'className': classes, //TODO: use class.foo instead
           'style.border-color': fareFamilly.color
       },
       {
@@ -120,7 +120,7 @@ function fare(cursor, data) {
 
         //
         if (!(fareFamilly.isBusiness && !itinerary.flight.hasBusinessCabin)) {
-            cursor = elementStart(cursor, 1, 'span', {className: 'fare-amount as-link'});
+            cursor = elementStart(cursor, 1, 'span', {'class': 'fare-amount as-link'});
             if (fareFamilly.isMarginal) {
                 cursor = element(cursor, 0, 'img', {src: "assets/award.svg", width:"24", height:"24"});
             } else {
@@ -133,7 +133,7 @@ function fare(cursor, data) {
         }
 
     } else {
-        cursor = elementStart(cursor, 3, 'span', {className: 'no-seats'});
+        cursor = elementStart(cursor, 3, 'span', {'class': 'no-seats'});
         cursor = text(cursor, 0, 'No seats');
         cursor = elementEnd(cursor);
     }
@@ -166,17 +166,17 @@ function itineraryAvail(cursor, data) {
         }
     }
 
-    cursor = elementStart(cursor, 0, 'div', {className: 'itinerary'});
+    cursor = elementStart(cursor, 0, 'div', {'class': 'itinerary'});
 
-        cursor = elementStart(cursor, 0, 'div', {className: 'itinerary-header'});
-            cursor = elementStart(cursor, 0, 'div', {className: 'itinerary-info right-delimiter'});
+        cursor = elementStart(cursor, 0, 'div', {'class': 'itinerary-header'});
+            cursor = elementStart(cursor, 0, 'div', {'class': 'itinerary-info right-delimiter'});
 
                 for (var i=0; i< segments.length; i++) {
                     var segment = segments[i];
                     cursor = view(cursor, 0, flightSummary, segment);
                 }
 
-                cursor = elementStart(cursor, 1, 'strong', {className: 'total-duration'});
+                cursor = elementStart(cursor, 1, 'strong', {'class': 'total-duration'});
                 cursor = text(cursor, 0, 'Total duration ' + data.itinerary.duration);
                 cursor = elementEnd(cursor);
             cursor = elementEnd(cursor);
@@ -199,9 +199,9 @@ function itineraryAvail(cursor, data) {
     if (operatedSegments.length) {
         for (var k=0; k<operatedSegments.length; k++) {
             var segment = operatedSegments[k];
-            cursor = elementStart(cursor, 2, 'div', {className: 'flight-operated with-icon'});
+            cursor = elementStart(cursor, 2, 'div', {'class': 'flight-operated with-icon'});
             cursor = element(cursor, 0, 'img', {
-                className: 'icon',
+                'class': 'icon',
                 src: 'assets/airlinesicons/' + segment.airline.code.toLowerCase() + '.png',
                 width: 14,
                 height: 14
@@ -215,7 +215,7 @@ function itineraryAvail(cursor, data) {
 }
 
 function app(cursor, data) {
-    cursor = elementStart(cursor, 0, 'div', {className: 'container availability'});
+    cursor = elementStart(cursor, 0, 'div', {'class': 'container availability'});
 
     var avail = data.availability;
 
