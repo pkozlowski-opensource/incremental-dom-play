@@ -14,11 +14,9 @@ IMPL
 
 PERF (ideas to test)
 -----------------------------------
-- change generated code signature so I'm passing around objects ready to insert into VDOM
 - use byte-masking for type instead of strings (will result in an additional field in VDOM)
 - have different VDOM node types to save memory (this will make those polymorphic, although still a limited set)
 - cache cursors
-- attribute / property / class / style split: [attr.foo]="exp", [class.foo]="exp", [style.foo]="exp", [foo]="exp"
 - create different methods for elements (with / without properties etc.) => there would be many combinations!
 - track memory usage - list places where memory gets allocated
 - skip parts of the tree optimizations
@@ -28,14 +26,12 @@ PERF (ideas to test)
 
 PERF (failed ideas)
 -----------------------------------
-- change props to attrs in creation => seems like it is slower, deffer for now
 - explore impact of monomorphic calls (elementStart mostly) => doesn't seem to have any impact...
 - is rendering to doc fragment any faster? => minimal difference (if any), ~1ms
 
 FUNCTIONALITY
 -----------------------------------
 - refresh / refreshAll
-- attribute / property split
 - refresh cycles / uni-directional data flow
 - data as multiple arguments
 - HTML compiler
