@@ -89,20 +89,15 @@ function fare(cursor, data) {
     var fareFamilly = data.fareFamilly;  //TODO: should be able to pass multiple arguments
     var itinerary = data.itinerary;
 
-    var classes = 'fare';
-    if (fareFamilly.isMarginal) {
-        classes +=' fare-inactive';
-    }
-    if (itinerary === selectedItinerary && selectedFare === fareFamilly.code) {
-        classes +=' fare-selected';
-    }
-
-    cursor = elementStart(cursor, 0, 'div', undefined, {
-          'className': classes, //TODO: use class.foo instead
-          'style.border-color': fareFamilly.color
-      },
+    cursor = elementStart(cursor, 0, 'div', {'class': 'fare'}, {
+        classes: {
+          'fare-inactive': fareFamilly.isMarginal,
+          'fare-selected': itinerary === selectedItinerary && selectedFare === fareFamilly.code,
+        },
+        styles: {'border-color': fareFamilly.color}
+        },
       {
-          click: function() {
+          'click': function selectFare() {
               selectedItinerary = itinerary;
               selectedFare = fareFamilly.code;
               refresh();

@@ -41,7 +41,19 @@
         NoopRenderer.prototype.setAttribute = function setAttribute(node, attrName, attrValue) {
         };
 
+        NoopRenderer.prototype.removeAttribute = function removeAttribute(node, attrName) {
+        };
+
         NoopRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
+        };
+
+        NoopRenderer.prototype.addClass = function addClass(node, className) {
+        };
+
+        NoopRenderer.prototype.removeClass = function addClass(node, className) {
+        };
+
+        NoopRenderer.prototype.setStyle = function setStyle(node, styleName, styleValue) {
         };
 
         NoopRenderer.prototype.addEventListener = function addEventListener(node, eventName, listenerFn) {
@@ -117,6 +129,22 @@
 
         LoggingRenderer.prototype.setAttribute = function setAttribute(node, attrName, attrValue) {
             this.instructions.push(`SET_ATTR ${node} ${attrName}=${attrValue}`);
+        };
+
+        LoggingRenderer.prototype.removeAttribute = function removeAttribute(node, attrName) {
+            this.instructions.push(`REMOVE_ATTR ${node} ${attrName}`);
+        };
+
+        LoggingRenderer.prototype.addClass = function addClass(node, className) {
+            this.instructions.push(`ADD_CLASS ${node} ${className}`);
+        };
+
+        LoggingRenderer.prototype.removeClass = function addClass(node, className) {
+            this.instructions.push(`REMOVE_CLASS ${node} ${className}`);
+        };
+
+        LoggingRenderer.prototype.setStyle = function setStyle(node, styleName, styleValue) {
+            this.instructions.push(`SET_STYLE ${node} ${styleName}=${styleValue}`);
         };
 
         LoggingRenderer.prototype.addEventListener = function addEventListener(node, eventName, listenerFn) {
@@ -369,18 +397,35 @@
 
                 it('should support creation of elements with dynamic properties', function() {
                     function dynamicPropsApp(cursor, data) {
-                        return element(cursor, 0, 'div', null, data);
+                        return element(cursor, 0, 'div', null, {props: data});
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), dynamicPropsApp, {id: 'some_id'});
                     expect(cursor.vdom.length).toBe(1);
                     expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].props.id).toBe('some_id');
+                    expect(cursor.vdom[0].bindings.props.id).toBe('some_id');
 
                     cursor = patch(cursor, dynamicPropsApp, {id: 'some_other_id'});
                     expect(cursor.vdom.length).toBe(1);
                     expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].props.id).toBe('some_other_id');
+                    expect(cursor.vdom[0].bindings.props.id).toBe('some_other_id');
+                });
+            });
+
+            describe('elements with class bindings', function() {
+
+                it('should support creation of elements with dynamic class bindings', function() {
+                    function dynamicPropsApp(cursor, condition) {
+                        return element(cursor, 0, 'div', null, {classes: {foo: condition}});
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), dynamicPropsApp, true);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('div');
+                    expect(cursor.vdom[0].bindings.classes.foo).toBeTruthy();
+
+                    cursor = patch(cursor, dynamicPropsApp, false);
+                    expect(cursor.vdom[0].bindings.classes.foo).toBeFalsy();
                 });
             });
 
@@ -616,7 +661,7 @@
 
                 it('should only update dynamic properties that change', function() {
                     function imgSizeApp(cursor, isBig) {
-                        return element(cursor, 0, 'img', {src: 'image.png'}, {width: isBig ? 100 : 10, height: 10});
+                        return element(cursor, 0, 'img', {src: 'image.png'}, {props: {width: isBig ? 100 : 10, height: 10}});
                     }
 
                     var cursor = patch(new VDomCursor(loggingRenderer), imgSizeApp, false);
@@ -632,6 +677,93 @@
                     ].join('\n'));
                 });
 
+            });
+
+            describe('elements with CSS class bindings', function() {
+
+                function withCSSApp(cursor, condition) {
+                    return element(cursor, 0, 'div', {'class': 'foo'}, {classes: {
+                        'bar': condition
+                    }});
+                }
+
+                it('should create elements with CSS classes and support bindings to classes', function() {
+                    var cursor = patch(new VDomCursor(loggingRenderer), withCSSApp, false);
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE div 1',
+                        'SET_ATTR div 1 class=foo',
+                        'APPEND #root 0 -> div 1'
+                    ].join('\n'));
+
+                    loggingRenderer.clearInstructions();
+                    cursor = patch(cursor, withCSSApp, true);
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'ADD_CLASS div 1 bar'
+                    ].join('\n'));
+
+                    loggingRenderer.clearInstructions();
+                    cursor = patch(cursor, withCSSApp, false);
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'REMOVE_CLASS div 1 bar'
+                    ].join('\n'));
+                });
+            });
+
+            describe('elements with attribute bindings', function() {
+
+                function withAttrs(cursor, value) {
+                    return element(cursor, 0, 'div', null, {attrs: {
+                        id: value
+                    }});
+                }
+
+                it('should create elements and support bindings to attributes', function() {
+                    var cursor = patch(new VDomCursor(loggingRenderer), withAttrs, 'foo');
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE div 1',
+                        'SET_ATTR div 1 id=foo',
+                        'APPEND #root 0 -> div 1'
+                    ].join('\n'));
+
+                    loggingRenderer.clearInstructions();
+                    cursor = patch(cursor, withAttrs, 'bar');
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'SET_ATTR div 1 id=bar'
+                    ].join('\n'));
+
+                    loggingRenderer.clearInstructions();
+                    cursor = patch(cursor, withAttrs, null);
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'REMOVE_ATTR div 1 id'
+                    ].join('\n'));
+                });
+            });
+
+            describe('elements with styles bindings', function() {
+
+                function withStyles(cursor, color) {
+                    return element(cursor, 0, 'div', null, {styles: {
+                        'background-color': color
+                    }});
+                }
+
+                it('should create elements and support bindings to attributes', function() {
+                    var cursor = patch(new VDomCursor(loggingRenderer), withStyles, 'red');
+
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE div 1',
+                        'SET_STYLE div 1 background-color=red',
+                        'APPEND #root 0 -> div 1'
+                    ].join('\n'));
+
+                    loggingRenderer.clearInstructions();
+                    cursor = patch(cursor, withStyles, 'green');
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'SET_STYLE div 1 background-color=green',
+                    ].join('\n'));
+                });
             });
 
             describe('parent -> child elements', function() {

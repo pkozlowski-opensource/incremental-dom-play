@@ -35,6 +35,10 @@ DOMRenderer.prototype.setAttribute = function setAttribute(node, attrName, attrV
     node.setAttribute(attrName, attrValue);
 };
 
+DOMRenderer.prototype.removeAttribute = function removeAttribute(node, attrName) {
+    node.removeAttribute(attrName);
+};
+
 DOMRenderer.prototype.setProperty = function setProperty(node, propName, propValue) {
     node[propName] = propValue;
 };

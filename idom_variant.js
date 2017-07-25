@@ -7,11 +7,11 @@ function VDomCursor(renderer, vdom, parentCursor, creationMode) {
     this.parentNativeEl = findParentNativeEl(this);
 }
 
-function VDomNode(id, nativeEl, type, value, props) {
+function VDomNode(id, nativeEl, type, value, bindings) {
     this.id = id;
     this.type = type;
     this.value = value;
-    this.props = props;
+    this.bindings = bindings;
     this.children = [];
     this.nativeEl = nativeEl;
 }
@@ -35,8 +35,9 @@ function deleteNodes(renderer, parentNativeEl, vdom, currentIdx, count) {
 
         if (elToDelete.type === '#view') {
           deleteNodes(renderer, parentNativeEl, elToDelete.children, 0, elToDelete.children.length);
+        } else {
+          renderer.removeNode(parentNativeEl, elToDelete.nativeEl);
         }
-        renderer.removeNode(parentNativeEl, elToDelete.nativeEl);
     }
 }
 
@@ -48,17 +49,6 @@ function setNativeAttrs(renderer, nativeEl, attrs) {
     for (var i = 0; i < len; i++) {
         attrName = attrNames[i];
         renderer.setAttribute(nativeEl, attrName, attrs[attrName]);
-    }
-}
-
-function setNativeProps(renderer, nativeEl, props) {
-    var propNames = Object.keys(props);
-    var len = propNames.length;
-    var propName;
-
-    for (var i = 0; i < len; i++) {
-        propName = propNames[i];
-        renderer.setProperty(nativeEl, propName, props[propName]);
     }
 }
 
@@ -160,9 +150,58 @@ function createElementVNode(cursor, elId, tagName, attrs, bindings, eventHandler
   if (attrs != null) {
      setNativeAttrs(cursor.renderer, nativeEl, attrs);
   }
-  if (bindings != null) {
-      setNativeProps(cursor.renderer, nativeEl, bindings);
-  }
+  if (bindings) {
+        if (bindings.classes) {
+
+            var classNames = Object.keys(bindings.classes);
+            var len = classNames.length;
+            var className, classValue;
+
+            for (var i=0; i<len; i++) {
+                className = classNames[i];
+                classValue = bindings.classes[className];
+                if (classValue) {
+                    cursor.renderer.addClass(nativeEl, className);
+                }
+            }
+        }
+
+        if (bindings.styles) {
+            var names = Object.keys(bindings.styles);
+            var len = names.length;
+            var name;
+
+            for (var i=0; i<len; i++) {
+                name = names[i];
+                cursor.renderer.setStyle(nativeEl, name, bindings.styles[name]);
+            }
+        }
+
+      if (bindings.props) {
+          var names = Object.keys(bindings.props);
+          var len = names.length;
+          var name;
+
+          for (var i=0; i<len; i++) {
+              name = names[i];
+              cursor.renderer.setProperty(nativeEl, name, bindings.props[name]);
+          }
+      }
+
+      if (bindings.attrs) {
+          var names = Object.keys(bindings.attrs);
+          var len = names.length;
+          var name, value;
+
+          for (var i=0; i<len; i++) {
+              name = names[i];
+              value = bindings.attrs[name];
+              if (value != null) {
+                cursor.renderer.setAttribute(nativeEl, name, value);
+              }
+          }
+      }
+    }
   if (eventHandlers != null) {
       registerEventHandlers(cursor.renderer, nativeEl, eventHandlers);
   }
@@ -171,32 +210,91 @@ function createElementVNode(cursor, elId, tagName, attrs, bindings, eventHandler
   return new VDomNode(elId, nativeEl, tagName, undefined, bindings);
 }
 
-function element(cursor, elId, tagName, staticProps, props, eventHandlers) {
+function element(cursor, elId, tagName, attrs, bindings, eventHandlers) {
     if (cursor.creationMode) {
 
-      cursor.vdom[cursor.vdom.length] = createElementVNode(cursor, elId, tagName, staticProps, props, eventHandlers);
+      cursor.vdom[cursor.vdom.length] = createElementVNode(cursor, elId, tagName, attrs, bindings, eventHandlers);
 
     } else {
 
       var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
 
       if (elementIdx === -1) {
-          cursor.vdom.splice(cursor.currentIdx, 0, createElementVNode(cursor, elId, tagName, staticProps, props, eventHandlers));
+          cursor.vdom.splice(cursor.currentIdx, 0, createElementVNode(cursor, elId, tagName, attrs, bindings, eventHandlers));
 
       } else {
         // found: update
         var vDomNode = cursor.vdom[elementIdx];
-        if (props) {
-            var propNames = Object.keys(props);
-            var len = propNames.length;
-            var propKey, propValue;
+        if (bindings) {
+            if (bindings.classes) {
 
-            for (var i=0; i<len; i++) {
-                propKey = propNames[i];
-                propValue = props[propKey];
-                if (vDomNode.props[propKey] !== propValue) {
-                    vDomNode.props[propKey] = propValue;
-                    cursor.renderer.setProperty(vDomNode.nativeEl, propKey, propValue)
+                var classNames = Object.keys(bindings.classes);
+                var len = classNames.length;
+                var className, classValue;
+
+                for (var i=0; i<len; i++) {
+                    className = classNames[i];
+
+                    classValue = bindings.classes[className];
+                    if (vDomNode.bindings.classes[className] !== classValue) {
+                        vDomNode.bindings.classes[className] = classValue;
+                        if (classValue) {
+                            cursor.renderer.addClass(vDomNode.nativeEl, className);
+                        } else {
+                            cursor.renderer.removeClass(vDomNode.nativeEl, className);
+                        }
+                    }
+                }
+            }
+
+            if (bindings.styles) {
+                var names = Object.keys(bindings.styles);
+                var len = names.length;
+                var name, value;
+
+                for (var i=0; i<len; i++) {
+                    name = names[i];
+
+                    value = bindings.styles[name];
+                    if (vDomNode.bindings.styles[name] !== value) {
+                        vDomNode.bindings.styles[name] = value;
+                        cursor.renderer.setStyle(vDomNode.nativeEl, name, value);
+                    }
+                }
+            }
+
+            if (bindings.props) {
+                var names = Object.keys(bindings.props);
+                var len = names.length;
+                var name, value;
+
+                for (var i=0; i<len; i++) {
+                    name = names[i];
+
+                    value = bindings.props[name];
+                    if (vDomNode.bindings.props[name] !== value) {
+                        vDomNode.bindings.props[name] = value;
+                        cursor.renderer.setProperty(vDomNode.nativeEl, name, value);
+                    }
+                }
+            }
+
+            if (bindings.attrs) {
+                var names = Object.keys(bindings.attrs);
+                var len = names.length;
+                var name, value;
+
+                for (var i=0; i<len; i++) {
+                    name = names[i];
+                    value = bindings.attrs[name];
+                    if (vDomNode.bindings.attrs[name] != value) {
+                        vDomNode.bindings.attrs[name] != value;
+                        if (value != null) {
+                            cursor.renderer.setAttribute(vDomNode.nativeEl, name, value);
+                        } else {
+                            cursor.renderer.removeAttribute(vDomNode.nativeEl, name);
+                        }
+                    }
                 }
             }
         }
