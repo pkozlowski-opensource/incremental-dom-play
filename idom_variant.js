@@ -362,13 +362,14 @@ function component(cursor, elId, componentClass, inputs) {
             //not found at the expected position => create
             cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, cmptInstance = new componentClass()));
         } else {
+            var vdomNode = cursor.vdom[elementIdx];
             cmptInstance = cursor.vdom[elementIdx].viewFn;
-            // TODO:
-            //- "OnPush"
-            //- allow swapping viewFn
-            //- lifecycle hooks
-            //- host
-            //- outputs / events?
+
+            if (vdomNode.viewFn.constructor !== componentClass) {
+                deleteNodes(cursor.renderer, cursor.parentNativeEl, vdomNode.children, 0, vdomNode.children.length);
+                cmptInstance = new componentClass();
+                cursor.vdom[elementIdx].viewFn = cmptInstance;
+            }
         }
 
         if (elementIdx > cursor.currentIdx) {

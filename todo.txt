@@ -5,8 +5,6 @@ ALGORITHM
 
 IMPL
 -----------------------------------
-- allow swapping viewFn
-- allow swapping components
 - unify views and component handling (but also think about what really makes those different!)
 - tests for renderer interactions (remaining: event handlers)
 - need better asserts on VDOM so writing tests is easier
@@ -34,12 +32,12 @@ PERF (failed ideas)
 
 FUNCTIONALITY
 -----------------------------------
+- beef up components (host, OnPush, outputs, lifecycle hooks)
+- content projection
 - refresh / refreshAll
 - refresh cycles / uni-directional data flow
+- web components compatibility (should work "out of the box", verify)
+- server-side rendering (hydration)
 - data as multiple arguments
 - HTML compiler
-- components (inputs, outputs, should the element stay in the DOM)
-- projection for components
 - namespaced elements (SVG, Math etc.)
-- web components compatibility
-- server-side rendering (hydration)

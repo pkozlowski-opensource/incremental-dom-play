@@ -588,6 +588,35 @@
                     cursor = patch(cursor, app, {text: 'bar'});
                     expect(cursor.vdom[0].children[0].value).toBe('bar');
                 });
+
+                it('should allow swapping component instance', function() {
+                    function CounterCmpt() {
+                    }
+                    CounterCmpt.prototype.render = function render(cursor) {
+                        return text(cursor, 0, '0');
+                    };
+
+                    function BigCounterCmpt() {
+                    }
+                    BigCounterCmpt.prototype.render = function render(cursor) {
+                        return text(cursor, 1, '100');
+                    };
+
+
+                    function app(cursor, isBig) {
+                        return component(cursor, 0, isBig ? BigCounterCmpt : CounterCmpt);
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app, false);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('#view');
+                    expect(cursor.vdom[0].children.length).toBe(1);
+                    expect(cursor.vdom[0].children[0].type).toBe('#text');
+                    expect(cursor.vdom[0].children[0].value).toBe('0');
+
+                    cursor = patch(cursor, app, true);
+                    expect(cursor.vdom[0].children[0].value).toBe('100');
+                });
             });
         });
 
