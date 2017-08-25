@@ -327,12 +327,14 @@ function view(cursor, elId, viewFn, data) {
       if (elementIdx === -1) {
         //not found at the expected position => create
         cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, viewFn));
+      } else {
+        // check if the viewFn changed and if so, cleanup the existing view and update VDOM
+        var vdomNode = cursor.vdom[elementIdx];
+        if (vdomNode.viewFn !== viewFn) {
+            deleteNodes(cursor.renderer, cursor.parentNativeEl, vdomNode.children, 0, vdomNode.children.length);
+            cursor.vdom[elementIdx].viewFn = viewFn;
+        }
       }
-
-      //no update for views - for now!
-      //ideas:
-      //- "OnPush"
-      //- allow swapping viewFn
 
       if (elementIdx > cursor.currentIdx) {
           deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);

@@ -495,6 +495,27 @@
                     expect(cursor.vdom[0].children.length).toBe(1);
                     expect(cursor.vdom[0].children[0].type).toBe('#text');
                 });
+
+                it('should allow swapping viewFn', function() {
+                    function textFooView(cursor) {
+                        return text(cursor, 0, 'foo');
+                    }
+
+                    function textSpanView(cursor) {
+                        return element(cursor, 0, 'span');
+                    }
+
+                    function app(cursor, useFoo) {
+                        return view(cursor, 0, useFoo ? textFooView : textSpanView);
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app, true);
+                    expect(cursor.vdom[0].children[0].type).toBe('#text');
+                    expect(cursor.vdom[0].children[0].value).toBe('foo');
+
+                    cursor = patch(cursor, app, false);
+                    expect(cursor.vdom[0].children[0].type).toBe('span');
+                });
             });
 
             describe('components', function() {
@@ -567,9 +588,6 @@
                     cursor = patch(cursor, app, {text: 'bar'});
                     expect(cursor.vdom[0].children[0].value).toBe('bar');
                 });
-
-                // inputs
-                // OnPush
             });
         });
 
@@ -955,6 +973,32 @@
                     expect(loggingRenderer.instructions.join('\n')).toEqual([
                         'CREATE #text 2 before',
                         'INSERT #root 0 -> #text 2 before #text 1'
+                    ].join('\n'));
+                });
+
+                it('should remove and add nodes when re-creating view on viewFn change', function() {
+                    function complexView(c) {
+                        return text(c, 0, 'complex');
+                    }
+
+                    function app(c, isSimple) {
+                        return view(c, 0, isSimple ? simpleView : complexView);
+                    }
+
+                    var c = new VDomCursor(loggingRenderer);
+
+                    patch(c, app, true);
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'CREATE #text 1 foo',
+                        'APPEND #root 0 -> #text 1',
+                    ].join('\n'));
+
+                    loggingRenderer.clearInstructions();
+                    patch(c, app, false);
+                    expect(loggingRenderer.instructions.join('\n')).toEqual([
+                        'DELETE #root 0 -> #text 1',
+                        'CREATE #text 2 complex',
+                        'APPEND #root 0 -> #text 2',
                     ].join('\n'));
                 });
 
