@@ -496,6 +496,81 @@
                     expect(cursor.vdom[0].children[0].type).toBe('#text');
                 });
             });
+
+            describe('components', function() {
+
+                it('should instantiate a component and use its render method', function() {
+                    function TestCmpt() {
+                    }
+
+                    TestCmpt.prototype.render = function render(cursor) {
+                        return text(cursor, 0, 'from component');
+                    };
+
+
+                    function app(cursor) {
+                        return component(cursor, 0, TestCmpt);
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('#view');
+                    expect(cursor.vdom[0].children.length).toBe(1);
+                    expect(cursor.vdom[0].children[0].type).toBe('#text');
+                    expect(cursor.vdom[0].children[0].value).toBe('from component');
+                });
+
+                it('should keep a component instance around between refresh cycles', function() {
+                    function TestCmpt() {
+                        this.counter = 0;
+                    }
+
+                    TestCmpt.prototype.render = function render(cursor) {
+                        return text(cursor, 0, '' + this.counter++);
+                    };
+
+
+                    function app(cursor) {
+                        return component(cursor, 0, TestCmpt);
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app);
+                    expect(cursor.vdom.length).toBe(1);
+                    expect(cursor.vdom[0].type).toBe('#view');
+                    expect(cursor.vdom[0].children.length).toBe(1);
+                    expect(cursor.vdom[0].children[0].type).toBe('#text');
+                    expect(cursor.vdom[0].children[0].value).toBe('0');
+
+                    cursor = patch(cursor, app);
+                    expect(cursor.vdom[0].children[0].value).toBe('1');
+
+                    cursor = patch(cursor, app);
+                    expect(cursor.vdom[0].children[0].value).toBe('2');
+                });
+
+                it('should propagate inputs to a components render function', function() {
+                    function TestCmpt() {
+                    }
+
+                    TestCmpt.prototype.render = function render(cursor, inputs) {
+                        return text(cursor, 0, inputs.text);
+                    };
+
+
+                    function app(cursor, data) {
+                        return component(cursor, 0, TestCmpt, data);
+                    }
+
+                    var cursor = patch(new VDomCursor(noopRenderer), app, {text: 'foo'});
+                    expect(cursor.vdom[0].children[0].value).toBe('foo');
+
+                    cursor = patch(cursor, app, {text: 'bar'});
+                    expect(cursor.vdom[0].children[0].value).toBe('bar');
+                });
+
+                // inputs
+                // OnPush
+            });
         });
 
         describe('Renderer interactions', function() {

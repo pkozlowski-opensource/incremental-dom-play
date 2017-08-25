@@ -7,11 +7,12 @@ function VDomCursor(renderer, vdom, parentCursor, creationMode) {
     this.parentNativeEl = findParentNativeEl(this);
 }
 
-function VDomNode(id, nativeEl, type, value, bindings) {
+function VDomNode(id, nativeEl, type, value, bindings, viewFn) {
     this.id = id;
     this.type = type;
     this.value = value;
     this.bindings = bindings;
+    this.viewFn = viewFn;
     this.children = [];
     this.nativeEl = nativeEl;
 }
@@ -108,7 +109,7 @@ function appendNativeEl(cursor, nativeEl) {
 
 function createTextVNode(cursor, elId, value) {
   var nativeEl = appendNativeEl(cursor, cursor.renderer.createText(value));
-  return new VDomNode(elId, nativeEl, "#text", value, undefined);
+  return new VDomNode(elId, nativeEl, "#text", value, undefined, undefined);
 }
 
 function text(cursor, elId, value) {
@@ -207,7 +208,7 @@ function createElementVNode(cursor, elId, tagName, attrs, bindings, eventHandler
   }
   appendNativeEl(cursor, nativeEl);
 
-  return new VDomNode(elId, nativeEl, tagName, undefined, bindings);
+  return new VDomNode(elId, nativeEl, tagName, undefined, bindings, undefined);
 }
 
 function element(cursor, elId, tagName, attrs, bindings, eventHandlers) {
@@ -310,14 +311,14 @@ function element(cursor, elId, tagName, attrs, bindings, eventHandlers) {
     return cursor;
 }
 
-function createViewVDomNode(cursor, elId) {
-  return new VDomNode(elId, undefined, "#view", undefined, undefined);
+function createViewVDomNode(cursor, elId, viewFn) {
+  return new VDomNode(elId, undefined, "#view", undefined, undefined, viewFn);
 }
 
 function view(cursor, elId, viewFn, data) {
     if (cursor.creationMode) {
 
-      cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId);
+      cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId, viewFn);
 
     } else {
 
@@ -325,7 +326,7 @@ function view(cursor, elId, viewFn, data) {
 
       if (elementIdx === -1) {
         //not found at the expected position => create
-        cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId));
+        cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, viewFn));
       }
 
       //no update for views - for now!
@@ -342,6 +343,41 @@ function view(cursor, elId, viewFn, data) {
 
     cursor = childrenStart(cursor);
     return childrenEnd(viewFn(cursor, data));
+}
+
+function component(cursor, elId, componentClass, inputs) {
+    var cmptInstance;
+
+    if (cursor.creationMode) {
+
+        cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId, cmptInstance = new componentClass());
+
+    } else {
+
+        var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
+
+        if (elementIdx === -1) {
+            //not found at the expected position => create
+            cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, cmptInstance = new componentClass()));
+        } else {
+            cmptInstance = cursor.vdom[elementIdx].viewFn;
+            // TODO:
+            //- "OnPush"
+            //- allow swapping viewFn
+            //- lifecycle hooks
+            //- host
+            //- outputs / events?
+        }
+
+        if (elementIdx > cursor.currentIdx) {
+            deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
+        }
+    }
+
+    cursor.currentIdx++;
+
+    cursor = childrenStart(cursor);
+    return childrenEnd(cmptInstance.render(cursor, inputs));
 }
 
 function elementStart(cursor, elId, tagName, staticProps, props, eventHandlers) {

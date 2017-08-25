@@ -5,6 +5,9 @@ ALGORITHM
 
 IMPL
 -----------------------------------
+- allow swapping viewFn
+- allow swapping components
+- unify views and component handling (but also think about what really makes those different!)
 - tests for renderer interactions (remaining: event handlers)
 - need better asserts on VDOM so writing tests is easier
 - loops with a group of sibiling elements => loops need a view... => ng-content?
