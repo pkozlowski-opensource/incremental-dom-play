@@ -5,13 +5,7 @@ ALGORITHM
 
 IMPL
 -----------------------------------
-- unify views and component handling (but also think about what really makes those different!)
 - tests for renderer interactions (remaining: event handlers)
-- need better asserts on VDOM so writing tests is easier
-- loops with a group of sibiling elements => loops need a view... => ng-content?
-- loops with stable sorting (keyed sorting)
-- map props (class, style, ...)
-- attrs - should be as simple as prefixing props with attr. => BTW, why Angular is making it so complex? Speed?
 
 PERF (ideas to test)
 -----------------------------------
@@ -32,6 +26,7 @@ PERF (failed ideas)
 
 FUNCTIONALITY
 -----------------------------------
+- loops with a group of sibiling elements => loops need a view... => ng-content?
 - beef up components (host, OnPush, outputs, lifecycle hooks)
 - content projection
 - refresh / refreshAll
@@ -39,5 +34,7 @@ FUNCTIONALITY
 - web components compatibility (should work "out of the box", verify)
 - server-side rendering (hydration)
 - data as multiple arguments
+- loops with stable sorting (keyed sorting)
 - HTML compiler
 - namespaced elements (SVG, Math etc.)
+- generic solution for map props (class, style, ...)
