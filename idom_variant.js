@@ -392,10 +392,10 @@ function childrenStart(cursor) {
     return new VDomCursor(cursor.renderer, children, cursor, children.length === 0);
 }
 
-function childrenEnd(cursor) {
+function childrenEnd(cursor, keepExistingVDomChildren) {
     var parentCursor = cursor.parentCursor;
 
-    if (cursor.vdom.length > cursor.currentIdx) {
+    if (!keepExistingVDomChildren && cursor.vdom.length > cursor.currentIdx) {
         deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, cursor.vdom.length - cursor.currentIdx);
     }
 
