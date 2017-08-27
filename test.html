@@ -647,6 +647,40 @@
                     cursor = patch(cursor, app, true);
                     expect(cursor.vdom[0].children[0].value).toBe('100');
                 });
+
+                it('should support OnPush-like guard fn for components', function() {
+                    function CounterCmpt() {
+                        this.counter = 0;
+                    }
+
+                    CounterCmpt.prototype.render = function render(c) {
+                       return text(c, 0, '' + this.counter++);
+                    };
+
+                    CounterCmpt.prototype.shouldUpdate = function shouldUpdate(inputs) {
+                        return inputs;
+                    };
+
+                    function app(c, shouldUpdate) {
+                        return component(c, 0, CounterCmpt, shouldUpdate);
+                    }
+
+                    //initial rendering - should ignore update flag
+                    var cursor = patch(new VDomCursor(noopRenderer), app, false);
+                    expect(cursor.vdom[0].children[0].value).toBe('0');
+
+                    //update mode with view rendering
+                    cursor = patch(cursor, app, true);
+                    expect(cursor.vdom[0].children[0].value).toBe('1');
+
+                    //update mode with view rendering ignore
+                    cursor = patch(cursor, app, false);
+                    expect(cursor.vdom[0].children[0].value).toBe('1');
+
+                    //update mode with view rendering on again
+                    cursor = patch(cursor, app, true);
+                    expect(cursor.vdom[0].children[0].value).toBe('2');
+                });
             });
         });
 

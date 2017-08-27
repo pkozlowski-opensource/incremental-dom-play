@@ -341,16 +341,19 @@ function view(cursor, elId, viewFn, data, shouldUpdateFn) {
 }
 
 function component(cursor, elId, componentClass, inputs) {
+    var mustUpdate = false;
     var cmptInstance;
 
     if (cursor.creationMode) {
         cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId, (cmptInstance = new componentClass()));
+        mustUpdate = true;
     } else {
         var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
 
         if (elementIdx === -1) {
             //not found at the expected position => create
             cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, (cmptInstance = new componentClass())));
+            mustUpdate = true;
         } else {
             var vdomNode = cursor.vdom[elementIdx];
             cmptInstance = cursor.vdom[elementIdx].viewFn;
@@ -359,6 +362,7 @@ function component(cursor, elId, componentClass, inputs) {
                 deleteNodes(cursor.renderer, cursor.parentNativeEl, vdomNode.children, 0, vdomNode.children.length);
                 cmptInstance = new componentClass();
                 cursor.vdom[elementIdx].viewFn = cmptInstance;
+                mustUpdate = true;
             }
         }
 
@@ -369,8 +373,13 @@ function component(cursor, elId, componentClass, inputs) {
 
     cursor.currentIdx++;
 
-    cursor = childrenStart(cursor);
-    return childrenEnd(cmptInstance.render(cursor, inputs));
+    var willCallViewFn = mustUpdate || (cmptInstance.shouldUpdate ? cmptInstance.shouldUpdate(inputs) : true);
+    if (willCallViewFn) {
+        cursor = childrenStart(cursor);
+        return childrenEnd(cmptInstance.render(cursor, inputs));
+    } else {
+        return cursor;
+    }
 }
 
 function elementStart(cursor, elId, tagName, staticProps, props, eventHandlers) {

@@ -5,6 +5,8 @@ ALGORITHM
 
 IMPL
 -----------------------------------
+- unify view and components handling
+- unify view and top-level fn handling
 - tests for renderer interactions (remaining: event handlers)
 
 PERF (ideas to test)
