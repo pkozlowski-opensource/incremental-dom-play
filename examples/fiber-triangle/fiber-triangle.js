@@ -67,17 +67,14 @@ function triangle(c, inputs) {
   return c;
 }
 
-function fiberTriangleApp(c, elapsed) {
-  var seconds = Math.floor(elapsed / 1000) % 10 + 1;
-  var t = elapsed / 1e3 % 10;
+function fiberTriangleApp(c, inputs) {
+  var t = inputs.elapsed / 1e3 % 10;
 
-  var changeDots = previousSeconds !== seconds || hooverChanged;
   c = elementStart(c, 0, 'div', {'class': 'main'}, {styles: {transform: `scaleX(${(1 + (t > 5 ? 10 - t : t) / 10) / 2.1}) scaleY(0.7) translateZ(0.1px)`}});
-  if (changeDots) {
-    c = view(c, 0, triangle, {size: 1e3, seconds: seconds, x: 0, y: 0});
-    previousSeconds = seconds;
-  }
-  c = elementEnd(c, !changeDots);
+    c = view(c, 0, triangle, {size: 1e3, seconds: inputs.seconds, x: 0, y: 0}, function() {
+      return inputs.secondsChanged || hooverChanged;
+    });
+  c = elementEnd(c);
 
   return c;
 }

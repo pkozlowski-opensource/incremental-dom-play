@@ -303,21 +303,24 @@ function createViewVDomNode(cursor, elId, viewFn) {
     return new VDomNode(elId, undefined, "#view", undefined, undefined, viewFn);
 }
 
-function view(cursor, elId, viewFn, data) {
+function view(cursor, elId, viewFn, data, shouldUpdateFn) {
+    var mustUpdate = false;
     if (cursor.creationMode) {
         cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId, viewFn);
+        mustUpdate = true;
     } else {
         var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
-
         if (elementIdx === -1) {
             //not found at the expected position => create
             cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, viewFn));
+            mustUpdate = true;
         } else {
             // check if the viewFn changed and if so, cleanup the existing view and update VDOM
             var vdomNode = cursor.vdom[elementIdx];
             if (vdomNode.viewFn !== viewFn) {
                 deleteNodes(cursor.renderer, cursor.parentNativeEl, vdomNode.children, 0, vdomNode.children.length);
                 cursor.vdom[elementIdx].viewFn = viewFn;
+                mustUpdate = true;
             }
         }
 
@@ -328,8 +331,13 @@ function view(cursor, elId, viewFn, data) {
 
     cursor.currentIdx++;
 
-    cursor = childrenStart(cursor);
-    return childrenEnd(viewFn(cursor, data));
+    var willCallViewFn = mustUpdate || (shouldUpdateFn ? shouldUpdateFn(data) : true);
+    if (willCallViewFn) {
+        cursor = childrenStart(cursor);
+        return childrenEnd(viewFn(cursor, data));
+    } else {
+        return cursor;
+    }
 }
 
 function component(cursor, elId, componentClass, inputs) {
@@ -374,10 +382,10 @@ function childrenStart(cursor) {
     return new VDomCursor(cursor.renderer, children, cursor, children.length === 0);
 }
 
-function childrenEnd(cursor, keepExistingVDomChildren) {
+function childrenEnd(cursor) {
     var parentCursor = cursor.parentCursor;
 
-    if (!keepExistingVDomChildren && cursor.vdom.length > cursor.currentIdx) {
+    if (cursor.vdom.length > cursor.currentIdx) {
         deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, cursor.vdom.length - cursor.currentIdx);
     }
 

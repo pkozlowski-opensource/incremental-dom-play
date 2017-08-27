@@ -26,8 +26,6 @@
     <script src="../../idom_variant.js"></script>
     <script>
         var reqAnimationFrameId;
-        var start = Date.now();
-        var previousSeconds;
         var hooverChanged = false;
     </script>
     <script src="fiber-triangle.js"></script>
@@ -37,10 +35,18 @@
 <script>
     var domRenderer = new DOMRenderer(document, document.querySelector('#main'));
     var cursor = new VDomCursor(domRenderer);
+    var start = Date.now();
+    var previousSeconds;
 
     function refresh() {
-        cursor = patch(cursor, fiberTriangleApp, Date.now() - start);
+        var elapsed = Date.now() - start;
+        var seconds = Math.floor(elapsed / 1000) % 10 + 1;
+        var secondsChanged = seconds !== previousSeconds;
+
+        cursor = patch(cursor, fiberTriangleApp, {elapsed: elapsed, seconds: seconds, secondsChanged: secondsChanged});
+
         reqAnimationFrameId = requestAnimationFrame(refresh);
+        previousSeconds = seconds;
     }
 
     refresh();
