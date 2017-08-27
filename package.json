@@ -12,7 +12,11 @@
     "url": "https://github.com/pkozlowski-opensource/incremental-dom-play/issues"
   },
   "homepage": "https://github.com/pkozlowski-opensource/incremental-dom-play#readme",
+  "scripts": {
+    "format": "prettier idom_variant.js renderer.js --write --print-width 140 --tab-width 4"
+  },
   "devDependencies": {
-    "jasmine-core": "^2.6.4"
+    "jasmine-core": "^2.6.4",
+    "prettier": "^1.5.3"
   }
 }
