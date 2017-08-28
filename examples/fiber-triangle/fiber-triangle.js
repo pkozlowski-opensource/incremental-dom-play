@@ -40,7 +40,10 @@ DotCmpt.prototype.render = function render(c, inputs) {
   return c;
 };
 
-function triangle(c, inputs) {
+function TraingleCmpt() {
+}
+
+TraingleCmpt.prototype.render = function render(c, inputs) {
 
   if (inputs.size <= 25) {
 
@@ -49,31 +52,42 @@ function triangle(c, inputs) {
   } else {
     var childSz = inputs.size / 2, half = childSz / 2;
 
-    c = view(c, 1, triangle, {size: childSz, seconds: inputs.seconds, x: inputs.x, y: inputs.y - half});
-    c = view(c, 2, triangle, {
+    c = component(c, 1, TraingleCmpt, {
       size: childSz,
       seconds: inputs.seconds,
+      secondsChanged: inputs.secondsChanged,
+      x: inputs.x,
+      y: inputs.y - half
+    });
+    c = component(c, 2, TraingleCmpt, {
+      size: childSz,
+      seconds: inputs.seconds,
+      secondsChanged: inputs.secondsChanged,
       x: inputs.x - childSz,
       y: inputs.y + half
     });
-    c = view(c, 3, triangle, {
+    c = component(c, 3, TraingleCmpt, {
       size: childSz,
       seconds: inputs.seconds,
+      secondsChanged: inputs.secondsChanged,
       x: inputs.x + childSz,
       y: inputs.y + half
     });
   }
 
   return c;
-}
+};
+
+TraingleCmpt.prototype.shouldUpdate = function shouldUpdate(inputs) {
+  return inputs.secondsChanged || hooverChanged;
+};
+
 
 function fiberTriangleApp(c, inputs) {
   var t = inputs.elapsed / 1e3 % 10;
 
   c = elementStart(c, 0, 'div', {'class': 'main'}, {styles: {transform: `scaleX(${(1 + (t > 5 ? 10 - t : t) / 10) / 2.1}) scaleY(0.7) translateZ(0.1px)`}});
-    c = view(c, 0, triangle, {size: 1e3, seconds: inputs.seconds, x: 0, y: 0}, function() {
-      return inputs.secondsChanged || hooverChanged;
-    });
+    c = component(c, 0, TraingleCmpt, {size: 1e3, seconds: inputs.seconds, secondsChanged: inputs.secondsChanged, x: 0, y: 0});
   c = elementEnd(c);
 
   return c;

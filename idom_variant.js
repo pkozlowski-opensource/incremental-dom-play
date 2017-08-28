@@ -7,14 +7,28 @@ function VDomCursor(renderer, vdom, parentCursor, creationMode) {
     this.parentNativeEl = findParentNativeEl(this);
 }
 
-function VDomNode(id, nativeEl, type, value, bindings, viewFn) {
+function VDomNode(id, nativeEl, type, value, bindings, cmpt) {
     this.id = id;
     this.type = type;
     this.value = value;
     this.bindings = bindings;
-    this.viewFn = viewFn;
+    this.cmpt = cmpt;
     this.children = [];
     this.nativeEl = nativeEl;
+}
+
+function ViewFnCmpt() {}
+
+function createCmptInstance(viewFnOrCmptCtror) {
+    var inst;
+    if (viewFnOrCmptCtror.prototype && viewFnOrCmptCtror.prototype.render) {
+        inst = new viewFnOrCmptCtror();
+    } else {
+        inst = new ViewFnCmpt();
+        inst.constructor = viewFnOrCmptCtror;
+        inst.render = viewFnOrCmptCtror;
+    }
+    return inst;
 }
 
 function advanceTo(vdom, startIdx, id) {
@@ -299,45 +313,12 @@ function element(cursor, elId, tagName, attrs, bindings, eventHandlers) {
     return cursor;
 }
 
-function createViewVDomNode(cursor, elId, viewFn) {
-    return new VDomNode(elId, undefined, "#view", undefined, undefined, viewFn);
+function createViewVDomNode(cursor, elId, cmpt) {
+    return new VDomNode(elId, undefined, "#view", undefined, undefined, cmpt);
 }
 
-function view(cursor, elId, viewFn, data, shouldUpdateFn) {
-    var mustUpdate = false;
-    if (cursor.creationMode) {
-        cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId, viewFn);
-        mustUpdate = true;
-    } else {
-        var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
-        if (elementIdx === -1) {
-            //not found at the expected position => create
-            cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, viewFn));
-            mustUpdate = true;
-        } else {
-            // check if the viewFn changed and if so, cleanup the existing view and update VDOM
-            var vdomNode = cursor.vdom[elementIdx];
-            if (vdomNode.viewFn !== viewFn) {
-                deleteNodes(cursor.renderer, cursor.parentNativeEl, vdomNode.children, 0, vdomNode.children.length);
-                cursor.vdom[elementIdx].viewFn = viewFn;
-                mustUpdate = true;
-            }
-        }
-
-        if (elementIdx > cursor.currentIdx) {
-            deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, elementIdx - cursor.currentIdx);
-        }
-    }
-
-    cursor.currentIdx++;
-
-    var willCallViewFn = mustUpdate || (shouldUpdateFn ? shouldUpdateFn(data) : true);
-    if (willCallViewFn) {
-        cursor = childrenStart(cursor);
-        return childrenEnd(viewFn(cursor, data));
-    } else {
-        return cursor;
-    }
+function view(cursor, elId, viewFn, data) {
+    return component(cursor, elId, viewFn, data);
 }
 
 function component(cursor, elId, componentClass, inputs) {
@@ -345,23 +326,23 @@ function component(cursor, elId, componentClass, inputs) {
     var cmptInstance;
 
     if (cursor.creationMode) {
-        cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId, (cmptInstance = new componentClass()));
+        cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId, (cmptInstance = createCmptInstance(componentClass)));
         mustUpdate = true;
     } else {
         var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
 
         if (elementIdx === -1) {
             //not found at the expected position => create
-            cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, (cmptInstance = new componentClass())));
+            cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, (cmptInstance = createCmptInstance(componentClass))));
             mustUpdate = true;
         } else {
             var vdomNode = cursor.vdom[elementIdx];
-            cmptInstance = cursor.vdom[elementIdx].viewFn;
+            cmptInstance = cursor.vdom[elementIdx].cmpt;
 
-            if (vdomNode.viewFn.constructor !== componentClass) {
+            if (vdomNode.cmpt.constructor !== componentClass) {
                 deleteNodes(cursor.renderer, cursor.parentNativeEl, vdomNode.children, 0, vdomNode.children.length);
-                cmptInstance = new componentClass();
-                cursor.vdom[elementIdx].viewFn = cmptInstance;
+                cmptInstance = createCmptInstance(componentClass);
+                cursor.vdom[elementIdx].cmpt = cmptInstance;
                 mustUpdate = true;
             }
         }
@@ -373,8 +354,8 @@ function component(cursor, elId, componentClass, inputs) {
 
     cursor.currentIdx++;
 
-    var willCallViewFn = mustUpdate || (cmptInstance.shouldUpdate ? cmptInstance.shouldUpdate(inputs) : true);
-    if (willCallViewFn) {
+    var willCallRenderFn = mustUpdate || (cmptInstance.shouldUpdate ? cmptInstance.shouldUpdate(inputs) : true);
+    if (willCallRenderFn) {
         cursor = childrenStart(cursor);
         return childrenEnd(cmptInstance.render(cursor, inputs));
     } else {
