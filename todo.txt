@@ -1,7 +1,7 @@
 ALGORITHM
 -----------------------------------
-- what happens with sibiling nodes?
 - how would I go about the "refresh" functionality?
+- how to skip re-calculation of 1-time (creation mode) bindings?
 
 IMPL
 -----------------------------------
@@ -28,7 +28,7 @@ PERF (failed ideas)
 FUNCTIONALITY
 -----------------------------------
 - loops with a group of sibiling elements => loops need a view... => ng-content?
-- beef up components (host, OnPush, outputs, lifecycle hooks)
+- beef up components (host, outputs, lifecycle hooks)
 - content projection
 - refresh / refreshAll
 - refresh cycles / uni-directional data flow
@@ -36,6 +36,6 @@ FUNCTIONALITY
 - server-side rendering (hydration)
 - data as multiple arguments
 - loops with stable sorting (keyed sorting)
-- HTML compiler
+- HTML parser / compiler
 - namespaced elements (SVG, Math etc.)
 - generic solution for map props (class, style, ...)

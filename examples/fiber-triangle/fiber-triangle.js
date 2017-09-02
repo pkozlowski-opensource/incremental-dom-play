@@ -13,26 +13,27 @@ DotCmpt.prototype.hoverChange = function(isHovering) {
 DotCmpt.prototype.render = function render(c, inputs) {
   var sz = 1.3 * 25;
   var self = this;
+  var create = c.creationMode;
 
-  var initalStyle = `
+  var initalStyle = create ? `
                 width: ${sz}px;
                 height: ${sz}px;
                 left: ${inputs.x}px;
                 top: ${inputs.y}px;
                 border-radius: ${sz / 2}px;
                 line-height: ${sz}px;
-            `;
+            ` : '';
 
   c = elementStart(c, 0, 'div',
-    {'class': 'dot', style: initalStyle},
-    {styles: {'background': this.hover ? "#ff0" : "#61dafb"}}, {
+    create ? {'class': 'dot', style: initalStyle} : undefined,
+    {styles: {'background': this.hover ? "#ff0" : "#61dafb"}}, create ? {
       mouseenter: function() {
         self.hoverChange(true);
       },
       mouseleave: function() {
         self.hoverChange(false);
       }
-    });
+    } : undefined);
 
   c = text(c, 0, this.hover ? `**${inputs.seconds}**` : inputs.seconds);
   c = elementEnd(c);
