@@ -85,9 +85,10 @@ TraingleCmpt.prototype.shouldUpdate = function shouldUpdate(inputs) {
 
 function fiberTriangleApp(c, inputs) {
   var t = inputs.elapsed / 1e3 % 10;
+  var transformStyle = `scaleX(${(1 + (t > 5 ? 10 - t : t) / 10) / 2.1}) scaleY(0.7) translateZ(0.1px)`;
 
-  c = elementStart(c, 0, 'div', {'class': 'main'}, {styles: {transform: `scaleX(${(1 + (t > 5 ? 10 - t : t) / 10) / 2.1}) scaleY(0.7) translateZ(0.1px)`}});
-    c = component(c, 0, TraingleCmpt, {size: 1e3, seconds: inputs.seconds, secondsChanged: inputs.secondsChanged, x: 0, y: 0});
+  c = elementStart(c, 0, 'div', {'class': 'main'}, {styles: {transform: transformStyle, '-webkit-transform': transformStyle}});
+        c = component(c, 0, TraingleCmpt, {size: 1e3, seconds: inputs.seconds, secondsChanged: inputs.secondsChanged, x: 0, y: 0});
   c = elementEnd(c);
 
   return c;
