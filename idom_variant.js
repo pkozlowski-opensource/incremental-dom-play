@@ -313,7 +313,7 @@ function element(cursor, elId, tagName, attrs, bindings, eventHandlers) {
     return cursor;
 }
 
-function createViewVDomNode(cursor, elId, cmpt) {
+function createViewVDomNode(elId, cmpt) {
     return new VDomNode(elId, undefined, "#view", undefined, undefined, cmpt);
 }
 
@@ -326,14 +326,14 @@ function component(cursor, elId, componentClass, inputs) {
     var cmptInstance;
 
     if (cursor.creationMode) {
-        cursor.vdom[cursor.vdom.length] = createViewVDomNode(cursor, elId, (cmptInstance = createCmptInstance(componentClass)));
+        cursor.vdom[cursor.vdom.length] = createViewVDomNode(elId, (cmptInstance = createCmptInstance(componentClass)));
         mustUpdate = true;
     } else {
         var elementIdx = advanceTo(cursor.vdom, cursor.currentIdx, elId);
 
         if (elementIdx === -1) {
             //not found at the expected position => create
-            cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(cursor, elId, (cmptInstance = createCmptInstance(componentClass))));
+            cursor.vdom.splice(cursor.currentIdx, 0, createViewVDomNode(elId, (cmptInstance = createCmptInstance(componentClass))));
             mustUpdate = true;
         } else {
             var vdomNode = cursor.vdom[elementIdx];
@@ -387,15 +387,11 @@ function childrenEnd(cursor) {
 // alias
 var elementEnd = childrenEnd;
 
-function patch(cursor, cmptFn, data) {
+function createRootCursor(renderer, componentClass) {
+    return new VDomCursor(renderer, [createViewVDomNode(0, createCmptInstance(componentClass))], null, true);
+}
+
+function patch(cursor, componentClass, data) {
     cursor.currentIdx = 0;
-    cursor.parentNativeEl = cursor.renderer.getRoot();
-
-    cursor = cmptFn(cursor, data);
-
-    if (cursor.vdom.length > cursor.currentIdx) {
-        deleteNodes(cursor.renderer, cursor.parentNativeEl, cursor.vdom, cursor.currentIdx, cursor.vdom.length - cursor.currentIdx);
-    }
-
-    return cursor;
+    return component(cursor, 0, componentClass, data);
 }

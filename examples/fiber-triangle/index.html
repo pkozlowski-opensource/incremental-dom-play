@@ -35,8 +35,7 @@
 <body>
 <div id="main"></div>
 <script>
-    var domRenderer = new DOMRenderer(document, document.querySelector('#main'));
-    var cursor = new VDomCursor(domRenderer, [createViewVDomNode(0, createCmptInstance(fiberTriangleApp))], null, true);
+    var cursor = createRootCursor(new DOMRenderer(document, document.querySelector('#main')), fiberTriangleApp);
     var start = Date.now();
     var previousSeconds;
 
