@@ -153,6 +153,11 @@
 
         describe('VDOM interactions', function() {
 
+
+            function getVDOM(cursor) {
+                return cursor.vdom[0].children;
+            }
+
             describe('single text node', function () {
                 function app(cursor, data) {
                     if (data !== null) {
@@ -163,27 +168,27 @@
                 }
 
                 it('should create a single text node', function () {
-                    var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
+                    var vdom = getVDOM(patch(new VDomCursor(noopRenderer), app, 'foo'));
 
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('#text');
-                    expect(cursor.vdom[0].value).toBe('foo');
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('#text');
+                    expect(vdom[0].value).toBe('foo');
                 });
 
                 it('should update a single text node', function () {
                     var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
-                    cursor = patch(cursor, app, 'bar');
+                    var vdom = getVDOM(patch(cursor, app, 'bar'));
 
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('#text');
-                    expect(cursor.vdom[0].value).toBe('bar');
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('#text');
+                    expect(vdom[0].value).toBe('bar');
                 });
 
                 it('should delete a single text node', function () {
                     var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
-                    cursor = patch(cursor, app, null);
+                    var vdom = getVDOM(patch(cursor, app, null));
 
-                    expect(cursor.vdom.length).toBe(0);
+                    expect(vdom.length).toBe(0);
                 });
             });
 
@@ -203,39 +208,42 @@
                 }
 
                 it('should create several text nodes', function () {
-                    var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
-                    expect(cursor.vdom.length).toBe(2);
+                    var vdom = getVDOM(patch(new VDomCursor(noopRenderer), app, 'foo'));
+                    expect(vdom.length).toBe(2);
                 });
 
                 it('should update selected text nodes', function () {
                     var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
-                    patch(cursor, app, 'bar');
-                    expect(cursor.vdom.length).toBe(2);
-                    expect(cursor.vdom[0].value).toBe('foo');
-                    expect(cursor.vdom[1].value).toBe('bar');
+                    var vdom = getVDOM(patch(cursor, app, 'bar'));
+                    expect(vdom.length).toBe(2);
+                    expect(vdom[0].value).toBe('foo');
+                    expect(vdom[1].value).toBe('bar');
                 });
 
                 it('should delete all text nodes', function () {
                     var cursor = patch(new VDomCursor(noopRenderer), app, 'foo');
-                    patch(cursor, app, null);
-                    expect(cursor.vdom.length).toBe(0);
+                    var vdom = getVDOM(patch(cursor, app, null));
+                    expect(vdom.length).toBe(0);
                 });
 
                 it('should delete first text node', function () {
                     var cursor = patch(new VDomCursor(noopRenderer), app, 'bar');
-                    expect(cursor.vdom.length).toBe(2);
-                    expect(cursor.vdom[0].value).toBe('foo');
-                    expect(cursor.vdom[1].value).toBe('bar');
-                    patch(cursor, app, 'deleteFirst');
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].value).toBe('deleteFirst');
+
+                    var vdom = getVDOM(cursor);
+                    expect(vdom.length).toBe(2);
+                    expect(vdom[0].value).toBe('foo');
+                    expect(vdom[1].value).toBe('bar');
+
+                    vdom = getVDOM(patch(cursor, app, 'deleteFirst'));
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].value).toBe('deleteFirst');
                 });
 
                 it('should delete last text node', function () {
                     var cursor = patch(new VDomCursor(noopRenderer), app, 'bar');
-                    patch(cursor, app, 'deleteLast');
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].value).toBe('foo');
+                    var vdom = getVDOM(patch(cursor, app, 'deleteLast'));
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].value).toBe('foo');
                 });
             });
 
@@ -246,9 +254,9 @@
                         return element(cursor, 0, 'span');
                     }
 
-                    var cursor = patch(new VDomCursor(noopRenderer), app);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('span');
+                    var vdom = getVDOM(patch(new VDomCursor(noopRenderer), app));
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('span');
                 });
 
                 it('should create multiple elements in a loop', function () {
@@ -260,9 +268,9 @@
                         return cursor;
                     }
 
-                    var cursor = patch(new VDomCursor(noopRenderer), app);
-                    expect(cursor.vdom.length).toBe(5);
-                    expect(cursor.vdom[0].type).toBe('span');
+                    var vdom = getVDOM(patch(new VDomCursor(noopRenderer), app));
+                    expect(vdom.length).toBe(5);
+                    expect(vdom[0].type).toBe('span');
                 });
 
                 it('should create elements with sibling container elements', function() {
@@ -279,11 +287,11 @@
                         return c;
                     }
 
-                    var cursor = patch(new VDomCursor(noopRenderer), app);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('div');
+                    var vdom = getVDOM(patch(new VDomCursor(noopRenderer), app));
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('div');
 
-                    var divChildren = cursor.vdom[0].children;
+                    var divChildren = vdom[0].children;
                     expect(divChildren.length).toBe(2);
                     expect(divChildren[0].type).toBe('h4');
                     expect(divChildren[1].type).toBe('h4');
@@ -308,17 +316,18 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), app, true);
-                    expect(cursor.vdom.length).toBe(3);
-                    expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[1].type).toBe('#view');
-                    expect(cursor.vdom[1].children[0].type).toBe('span');
-                    expect(cursor.vdom[1].children[1].type).toBe('span');
-                    expect(cursor.vdom[2].type).toBe('div');
+                    var vdom = getVDOM(cursor);
+                    expect(vdom.length).toBe(3);
+                    expect(vdom[0].type).toBe('div');
+                    expect(vdom[1].type).toBe('#view');
+                    expect(vdom[1].children[0].type).toBe('span');
+                    expect(vdom[1].children[1].type).toBe('span');
+                    expect(vdom[2].type).toBe('div');
 
-                    cursor = patch(cursor, app, false);
-                    expect(cursor.vdom.length).toBe(2);
-                    expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[1].type).toBe('div');
+                    vdom = getVDOM(patch(cursor, app, false));
+                    expect(vdom.length).toBe(2);
+                    expect(vdom[0].type).toBe('div');
+                    expect(vdom[1].type).toBe('div');
                 });
 
                 it('should delete single elements at the begining', function () {
@@ -330,13 +339,14 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), app, false);
-                    expect(cursor.vdom.length).toBe(2);
-                    expect(cursor.vdom[0].type).toBe('span');
-                    expect(cursor.vdom[1].type).toBe('div');
+                    var vdom = getVDOM(cursor);
+                    expect(vdom.length).toBe(2);
+                    expect(vdom[0].type).toBe('span');
+                    expect(vdom[1].type).toBe('div');
 
-                    patch(cursor, app, true);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('div');
+                    vdom = getVDOM(patch(cursor, app, true));
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('div');
                 });
 
                 it('should create mix of elements and text nodes', function () {
@@ -346,11 +356,11 @@
                         return element(cursor, 2, 'div');
                     }
 
-                    var cursor = patch(new VDomCursor(noopRenderer), appMix, 'foo');
-                    expect(cursor.vdom.length).toBe(3);
-                    expect(cursor.vdom[0].type).toBe('span');
-                    expect(cursor.vdom[1].value).toBe('foo');
-                    expect(cursor.vdom[2].type).toBe('div');
+                    var vdom = getVDOM(patch(new VDomCursor(noopRenderer), appMix, 'foo'));
+                    expect(vdom.length).toBe(3);
+                    expect(vdom[0].type).toBe('span');
+                    expect(vdom[1].value).toBe('foo');
+                    expect(vdom[2].type).toBe('div');
                 });
 
                 it('should replace elements if needed', function() {
@@ -364,12 +374,13 @@
                    }
 
                     var cursor = patch(new VDomCursor(noopRenderer), swappingElementsApp, true);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('span');
+                    var vdom = getVDOM(cursor);
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('span');
 
-                    patch(cursor, swappingElementsApp, false);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('div');
+                    vdom = getVDOM(patch(cursor, swappingElementsApp, false));
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('div');
                 });
 
                 it('should replace elements by text nodes if needed', function() {
@@ -383,13 +394,14 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), swappingElementsApp, true);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('span');
+                    var vdom = getVDOM(cursor);
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('span');
 
-                    patch(cursor, swappingElementsApp, false);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('#text');
-                    expect(cursor.vdom[0].value).toBe('ha!');
+                    vdom = getVDOM(patch(cursor, swappingElementsApp, false));
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('#text');
+                    expect(vdom[0].value).toBe('ha!');
                 });
             });
 
@@ -401,14 +413,15 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), dynamicPropsApp, {id: 'some_id'});
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].bindings.props.id).toBe('some_id');
+                    var vdom = getVDOM(cursor);
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('div');
+                    expect(vdom[0].bindings.props.id).toBe('some_id');
 
-                    cursor = patch(cursor, dynamicPropsApp, {id: 'some_other_id'});
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].bindings.props.id).toBe('some_other_id');
+                    vdom = getVDOM(patch(cursor, dynamicPropsApp, {id: 'some_other_id'}));
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('div');
+                    expect(vdom[0].bindings.props.id).toBe('some_other_id');
                 });
             });
 
@@ -420,12 +433,13 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), dynamicPropsApp, true);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].bindings.classes.foo).toBeTruthy();
+                    var vdom = getVDOM(cursor);
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('div');
+                    expect(vdom[0].bindings.classes.foo).toBeTruthy();
 
-                    cursor = patch(cursor, dynamicPropsApp, false);
-                    expect(cursor.vdom[0].bindings.classes.foo).toBeFalsy();
+                    vdom = getVDOM(patch(cursor, dynamicPropsApp, false));
+                    expect(vdom[0].bindings.classes.foo).toBeFalsy();
                 });
             });
 
@@ -441,13 +455,13 @@
                         return cursor;
                     }
 
-                    var cursor = patch(new VDomCursor(noopRenderer), childrenApp, null);
+                    var vdom = getVDOM(patch(new VDomCursor(noopRenderer), childrenApp, null));
 
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].children.length).toBe(2);
-                    expect(cursor.vdom[0].children[0].type).toBe('span');
-                    expect(cursor.vdom[0].children[1].type).toBe('div');
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('div');
+                    expect(vdom[0].children.length).toBe(2);
+                    expect(vdom[0].children[0].type).toBe('span');
+                    expect(vdom[0].children[1].type).toBe('div');
                 });
 
 
@@ -464,17 +478,19 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), childrenApp, true);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].children.length).toBe(2);
-                    expect(cursor.vdom[0].children[0].type).toBe('span');
-                    expect(cursor.vdom[0].children[1].type).toBe('div');
+                    var vdom = getVDOM(cursor);
+                    
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('div');
+                    expect(vdom[0].children.length).toBe(2);
+                    expect(vdom[0].children[0].type).toBe('span');
+                    expect(vdom[0].children[1].type).toBe('div');
 
-                    cursor = patch(cursor, childrenApp, false);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('div');
-                    expect(cursor.vdom[0].children.length).toBe(1);
-                    expect(cursor.vdom[0].children[0].type).toBe('span');
+                    cursor = getVDOM(patch(cursor, childrenApp, false));
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('div');
+                    expect(vdom[0].children.length).toBe(1);
+                    expect(vdom[0].children[0].type).toBe('span');
                 });
             });
 
@@ -489,11 +505,11 @@
                         return view(cursor, 0, textView);
                     }
 
-                    var cursor = patch(new VDomCursor(noopRenderer), app);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('#view');
-                    expect(cursor.vdom[0].children.length).toBe(1);
-                    expect(cursor.vdom[0].children[0].type).toBe('#text');
+                    var vdom = getVDOM(patch(new VDomCursor(noopRenderer), app));
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('#view');
+                    expect(vdom[0].children.length).toBe(1);
+                    expect(vdom[0].children[0].type).toBe('#text');
                 });
 
                 it('should allow swapping viewFn', function() {
@@ -510,11 +526,13 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), app, true);
-                    expect(cursor.vdom[0].children[0].type).toBe('#text');
-                    expect(cursor.vdom[0].children[0].value).toBe('foo');
+                    var vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].type).toBe('#text');
+                    expect(vdom[0].children[0].value).toBe('foo');
 
                     cursor = patch(cursor, app, false);
-                    expect(cursor.vdom[0].children[0].type).toBe('span');
+                    vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].type).toBe('span');
                 });
 
             });
@@ -535,11 +553,13 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), app);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('#view');
-                    expect(cursor.vdom[0].children.length).toBe(1);
-                    expect(cursor.vdom[0].children[0].type).toBe('#text');
-                    expect(cursor.vdom[0].children[0].value).toBe('from component');
+                    var vdom = getVDOM(cursor);
+
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('#view');
+                    expect(vdom[0].children.length).toBe(1);
+                    expect(vdom[0].children[0].type).toBe('#text');
+                    expect(vdom[0].children[0].value).toBe('from component');
                 });
 
                 it('should keep a component instance around between refresh cycles', function() {
@@ -557,17 +577,21 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), app);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('#view');
-                    expect(cursor.vdom[0].children.length).toBe(1);
-                    expect(cursor.vdom[0].children[0].type).toBe('#text');
-                    expect(cursor.vdom[0].children[0].value).toBe('0');
+                    var vdom = getVDOM(cursor);
+
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('#view');
+                    expect(vdom[0].children.length).toBe(1);
+                    expect(vdom[0].children[0].type).toBe('#text');
+                    expect(vdom[0].children[0].value).toBe('0');
 
                     cursor = patch(cursor, app);
-                    expect(cursor.vdom[0].children[0].value).toBe('1');
+                    vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].value).toBe('1');
 
                     cursor = patch(cursor, app);
-                    expect(cursor.vdom[0].children[0].value).toBe('2');
+                    vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].value).toBe('2');
                 });
 
                 it('should propagate inputs to a components render function', function() {
@@ -584,10 +608,12 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), app, {text: 'foo'});
-                    expect(cursor.vdom[0].children[0].value).toBe('foo');
+                    var vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].value).toBe('foo');
 
                     cursor = patch(cursor, app, {text: 'bar'});
-                    expect(cursor.vdom[0].children[0].value).toBe('bar');
+                    vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].value).toBe('bar');
                 });
 
                 it('should allow swapping component instance', function() {
@@ -609,14 +635,16 @@
                     }
 
                     var cursor = patch(new VDomCursor(noopRenderer), app, false);
-                    expect(cursor.vdom.length).toBe(1);
-                    expect(cursor.vdom[0].type).toBe('#view');
-                    expect(cursor.vdom[0].children.length).toBe(1);
-                    expect(cursor.vdom[0].children[0].type).toBe('#text');
-                    expect(cursor.vdom[0].children[0].value).toBe('0');
+                    var vdom = getVDOM(cursor);
+                    expect(vdom.length).toBe(1);
+                    expect(vdom[0].type).toBe('#view');
+                    expect(vdom[0].children.length).toBe(1);
+                    expect(vdom[0].children[0].type).toBe('#text');
+                    expect(vdom[0].children[0].value).toBe('0');
 
                     cursor = patch(cursor, app, true);
-                    expect(cursor.vdom[0].children[0].value).toBe('100');
+                    vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].value).toBe('100');
                 });
 
                 it('should support OnPush-like guard fn for components', function() {
@@ -638,19 +666,23 @@
 
                     //initial rendering - should ignore update flag
                     var cursor = patch(new VDomCursor(noopRenderer), app, false);
-                    expect(cursor.vdom[0].children[0].value).toBe('0');
+                    var vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].value).toBe('0');
 
                     //update mode with view rendering
                     cursor = patch(cursor, app, true);
-                    expect(cursor.vdom[0].children[0].value).toBe('1');
+                    vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].value).toBe('1');
 
                     //update mode with view rendering ignore
                     cursor = patch(cursor, app, false);
-                    expect(cursor.vdom[0].children[0].value).toBe('1');
+                    vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].value).toBe('1');
 
                     //update mode with view rendering on again
                     cursor = patch(cursor, app, true);
-                    expect(cursor.vdom[0].children[0].value).toBe('2');
+                    vdom = getVDOM(cursor);
+                    expect(vdom[0].children[0].value).toBe('2');
                 });
             });
         });

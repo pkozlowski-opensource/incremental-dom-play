@@ -1,11 +1,11 @@
 ALGORITHM
 -----------------------------------
-- how would I go about the "refresh" functionality?
+- how would I go about the "refresh" functionality (global, mark for check etc.)?
 - how to skip re-calculation of 1-time (creation mode) bindings?
+- event handlers and closures - impact on memory / perf and functionality
 
 IMPL
 -----------------------------------
-- unify view and top-level fn handling
 - tests for renderer interactions (remaining: event handlers)
 
 PERF (ideas to test)
@@ -30,8 +30,6 @@ FUNCTIONALITY
 - loops with a group of sibiling elements => loops need a view... => ng-content?
 - beef up components (host, outputs, lifecycle hooks)
 - content projection
-- refresh / refreshAll
-- refresh cycles / uni-directional data flow
 - web components compatibility (should work "out of the box", verify)
 - server-side rendering (hydration)
 - data as multiple arguments
@@ -39,3 +37,4 @@ FUNCTIONALITY
 - HTML parser / compiler
 - namespaced elements (SVG, Math etc.)
 - generic solution for map props (class, style, ...)
+- refreshAll, refresh from root

@@ -1,13 +1,12 @@
-function DotCmpt() {
+function DotCmpt(renderer, viewNode) {
+  this.renderer = renderer;
+  this.viewNode = viewNode;
   this.hover = false;
 }
 
-DotCmpt.prototype.hoverChange = function(isHovering) {
-  cancelAnimationFrame(reqAnimationFrameId);
+DotCmpt.prototype.hoverChange = function(isHovering, seconds) {
   this.hover = isHovering;
-  hooverChanged = true;
-  refresh();
-  hooverChanged = false;
+  refreshView(this.renderer, this.viewNode, this, {seconds: seconds});
 };
 
 DotCmpt.prototype.render = function render(c, inputs) {
@@ -28,10 +27,10 @@ DotCmpt.prototype.render = function render(c, inputs) {
     create ? {'class': 'dot', style: initalStyle} : undefined,
     {styles: {'background': this.hover ? "#ff0" : "#61dafb"}}, create ? {
       mouseenter: function() {
-        self.hoverChange(true);
+        self.hoverChange(true, inputs.seconds);
       },
       mouseleave: function() {
-        self.hoverChange(false);
+        self.hoverChange(false, inputs.seconds);
       }
     } : undefined);
 
@@ -80,9 +79,8 @@ TraingleCmpt.prototype.render = function render(c, inputs) {
 };
 
 TraingleCmpt.prototype.shouldUpdate = function shouldUpdate(inputs) {
-  return inputs.secondsChanged || hooverChanged;
+  return inputs.secondsChanged;
 };
-
 
 function fiberTriangleApp(c, inputs) {
   var t = inputs.elapsed / 1e3 % 10;

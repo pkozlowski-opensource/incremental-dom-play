@@ -26,10 +26,6 @@
     </style>
     <script src="../../renderer.js"></script>
     <script src="../../idom_variant.js"></script>
-    <script>
-        var reqAnimationFrameId;
-        var hooverChanged = false;
-    </script>
     <script src="fiber-triangle.js"></script>
 </head>
 <body>
@@ -46,12 +42,11 @@
 
         cursor = patch(cursor, fiberTriangleApp, {elapsed: elapsed, seconds: seconds, secondsChanged: secondsChanged});
 
-        reqAnimationFrameId = requestAnimationFrame(refresh);
+        requestAnimationFrame(refresh);
         previousSeconds = seconds;
     }
 
     refresh();
-
 </script>
 </body>
 </html>
